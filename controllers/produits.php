@@ -1,5 +1,5 @@
 <?php
-require_once '../models/Produit.php';
+require_once '../models/produit.php';
 
 // Fetch all products
 $produits = Produit::getAllProduits();

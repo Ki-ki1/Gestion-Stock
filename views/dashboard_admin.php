@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des Produits</title>
+    <title>Tableau de Bord Administrateur</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -186,15 +186,22 @@
             <i class="fas fa-warehouse"></i>
             <h1>Gestion Stock</h1>
         </div>
-
         <nav class="nav-links">
             <div class="nav-item">
-                <i class="fas fa-shopping-cart"></i>
-                <span><a href="demandes.php" style="color: white;">Demandes</a></span>
+                <i class="fas fa-users"></i>
+                <span><a href="gestion_utilisateurs.php" style="color: white;">Gestion des Utilisateurs</a></span>
             </div>
-            <div class="nav-item active">
-                <i class="fas fa-box"></i>
-                <span><a href="produits.php" style="color: white;">Produits</a></span>
+            <div class="nav-item">
+                <i class="fas fa-boxes"></i>
+                <span><a href="gestion_produits.php" style="color: white;">Gestion des Produits</a></span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-file-invoice"></i>
+                <span><a href="gestion_factures.php" style="color: white;">Gestion des Factures</a></span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span><a href="gestion_demandes.php" style="color: white;">Gestion des Demandes</a></span>
             </div>
         </nav>
     </aside>
@@ -202,43 +209,8 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="dashboard-title">
-            <h2>Liste des Produits</h2>
+            <h2>Tableau de Bord Administrateur</h2>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nom</th>
-                    <th>Quantité</th>
-                    <th>Désignation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                require_once '../models/produit.php';
-                $produits = Produit::getAllProduits();
-
-                if (!empty($produits)) {
-                    foreach ($produits as $produit) {
-                ?>
-                <tr>
-                    <td><?= htmlspecialchars($produit['idP']) ?></td>
-                    <td><?= htmlspecialchars($produit['nom']) ?></td>
-                    <td><?= htmlspecialchars($produit['quantite']) ?></td>
-                    <td><?= htmlspecialchars($produit['designation']) ?></td>
-                </tr>
-                <?php
-                    }
-                } else {
-                ?>
-                <tr>
-                    <td colspan="4">Aucun produit trouvé.</td>
-                </tr>
-                <?php
-                }
-                ?>
-            </tbody>
-        </table>
     </main>
 </body>
 </html>

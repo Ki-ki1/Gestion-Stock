@@ -315,10 +315,6 @@
         <div class="dashboard-title">
             <h2>Tableau de bord Agent</h2>
         </div>
-        <div class="content">
-            <!-- Content specific to the agent dashboard will go here -->
-            <p>Welcome to the Agent Dashboard. Here you can manage and view various aspects of the system.</p>
-        </div>
     </main>
 </body>
 </html>

@@ -1,5 +1,5 @@
 <?php
-require_once '../models/Demande.php';
+require_once '../models/demande.php';
 
 // Fetch all demands
 $demandes = Demande::getAllDemandes();

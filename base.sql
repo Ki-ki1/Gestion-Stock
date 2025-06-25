@@ -25,9 +25,13 @@ CREATE TABLE Agents (
 
 -- Table Produits
 CREATE TABLE Produits (
-    idP INT PRIMARY KEY AUTO_INCREMENT,
+    ALTER TABLE produits
+MODIFY idP VARCHAR(20),
+
     quantite INT,
-    designation VARCHAR(100)
+    designation VARCHAR(100),
+    ALTER TABLE Produits ADD seuil INT;
+
 );
 
 -- Table Factures
