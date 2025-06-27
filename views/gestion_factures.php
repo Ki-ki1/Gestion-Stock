@@ -1,289 +1,190 @@
 <?php
 require_once '../config/db.php';
 
-// Fonctions
-function getAllFactures() {
-    global $pdo;
-    $stmt = $pdo->query("SELECT * FROM Factures");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
 function getAllProduits() {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM Produits");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return $pdo->query("SELECT * FROM Produits")->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getAllFactures() {
+    global $pdo;
+    return $pdo->query("SELECT * FROM factures ORDER BY num DESC")->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function getFactureByNum($num) {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT * FROM Factures WHERE num = ?");
+    $stmt = $pdo->prepare("SELECT * FROM factures WHERE num = ?");
     $stmt->execute([$num]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function saveFacture($num, $fournisseur, $date, $idP_array, $quantite_array, $prixUnitaire_array) {
+    global $pdo;
+
+    if ($num === null) {
+        $stmt = $pdo->query("SHOW TABLE STATUS LIKE 'factures'");
+        $num = $stmt->fetch()['Auto_increment'];
+    } else {
+        $stmt = $pdo->prepare("DELETE FROM factures WHERE num = ?");
+        $stmt->execute([$num]);
+    }
+
+    for ($i = 0; $i < count($idP_array); $i++) {
+        $idP = $idP_array[$i];
+        $quantite = (int)$quantite_array[$i];
+        $prix_unitaire = (float)$prixUnitaire_array[$i];
+        $prix_total = $quantite * $prix_unitaire;
+
+        if (!$idP || $quantite <= 0 || $prix_unitaire <= 0) continue;
+
+        $stmt = $pdo->prepare("INSERT INTO factures (num, fournisseur, date, idP, quantite, prix_total, prix_unitaire) 
+                               VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$num, $fournisseur, $date, $idP, $quantite, $prix_total, $prix_unitaire]);
+    }
+
+    return $num;
 }
 
 function supprimerFacture($num) {
     global $pdo;
-    $stmt = $pdo->prepare("DELETE FROM Factures WHERE num = ?");
-    return $stmt->execute([$num]);
+    $stmt = $pdo->prepare("DELETE FROM factures WHERE num = ?");
+    $stmt->execute([$num]);
 }
 
-function saveFacture($fournisseur, $prix, $date, $idP, $num = null) {
-    global $pdo;
-    if ($num) {
-        $stmt = $pdo->prepare("UPDATE Factures SET fournisseur = ?, prix = ?, date = ?, idP = ? WHERE num = ?");
-        return $stmt->execute([$fournisseur, $prix, $date, $idP, $num]);
-    } else {
-        $stmt = $pdo->prepare("INSERT INTO Factures (fournisseur, prix, date, idP) VALUES (?, ?, ?, ?)");
-        return $stmt->execute([$fournisseur, $prix, $date, $idP]);
+$produits = getAllProduits();
+$factures = getAllFactures();
+
+$action = $_GET['action'] ?? ($_POST['action'] ?? '');
+$numToEdit = $action === 'modifier' ? ($_GET['num'] ?? $_POST['num'] ?? null) : null;
+$factureToEdit = $numToEdit ? getFactureByNum($numToEdit) : [];
+$fournisseur_edit = $date_edit = '';
+$idP_edit = $quantite_edit = $pu_edit = [];
+
+if ($factureToEdit) {
+    $fournisseur_edit = $factureToEdit[0]['fournisseur'];
+    $date_edit = $factureToEdit[0]['date'];
+    foreach ($factureToEdit as $ligne) {
+        $idP_edit[] = $ligne['idP'];
+        $quantite_edit[] = $ligne['quantite'];
+        $pu_edit[] = $ligne['prix_unitaire'];
     }
 }
 
-// Gestion POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
-        if ($_POST['action'] === 'supprimer') {
-            $num = $_POST['num'] ?? null;
-            if ($num) {
-                supprimerFacture($num);
-                echo "<script>alert('Facture supprimée avec succès.');</script>";
-                header("Refresh:0; url=gestion_factures.php");
-                exit;
-            }
-        } elseif ($_POST['action'] === 'ajouter' || $_POST['action'] === 'modifier') {
-            $fournisseur = $_POST['fournisseur'] ?? '';
-            $prix = $_POST['prix'] ?? '';
-            $date = $_POST['date'] ?? '';
-            $idP = $_POST['idP'] ?? '';
-            $num = $_POST['num'] ?? null;
+    if ($action === 'ajouter' || $action === 'modifier') {
+        $num = $action === 'modifier' ? ($_POST['num'] ?? null) : null;
+        $fournisseur = $_POST['fournisseur'] ?? '';
+        $date = $_POST['date'] ?? '';
+        $idP_array = $_POST['idP'] ?? [];
+        $quantite_array = $_POST['quantite'] ?? [];
+        $prixUnitaire_array = $_POST['prix_unitaire'] ?? [];
 
-            if (empty($fournisseur) || empty($prix) || empty($date) || empty($idP)) {
-                echo "<script>alert('Tous les champs sont obligatoires.');</script>";
-            } else {
-                saveFacture($fournisseur, $prix, $date, $idP, $num);
-                header("Location: gestion_factures.php");
-                exit;
-            }
+        if (!$fournisseur || !$date || empty($idP_array)) {
+            echo "<script>alert('Tous les champs sont obligatoires.');</script>";
+        } else {
+            saveFacture($num, $fournisseur, $date, $idP_array, $quantite_array, $prixUnitaire_array);
+            header("Location: gestion_factures.php");
+            exit;
+        }
+    } elseif ($action === 'supprimer') {
+        $num = $_POST['num'] ?? null;
+        if ($num) {
+            supprimerFacture($num);
+            header("Location: gestion_factures.php");
+            exit;
         }
     }
 }
-
-// Variables pour formulaire
-$action = $_GET['action'] ?? '';
-$num = $_GET['num'] ?? null;
-$fournisseur = $prix = $date = $idP = '';
-
-if ($action === 'modifier' && $num) {
-    $facture = getFactureByNum($num);
-    if ($facture) {
-        $fournisseur = $facture['fournisseur'];
-        $prix = $facture['prix'];
-        $date = $facture['date'];
-        $idP = $facture['idP'];
-    }
-}
-
-$factures = getAllFactures();
-$produits = getAllProduits();
 ?>
 
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
     <title>Gestion des Factures</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <style>
-        :root {
-            --primary: #0c2461;
-            --primary-light: #1e3799;
-            --success: #27ae60;
-            --danger: #e74c3c;
-            --light-gray: #e9ecef;
-            --border: #dee2e6;
-            --dark: #343a40;
-        }
-        * {
-            margin: 0; padding: 0; box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background-color: #f5f7fb;
-            min-height: 100vh;
-            color: var(--dark);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        h2 {
-            color: var(--primary);
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            max-width: 900px;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-        }
-        table, th, td {
-            border: 1px solid var(--border);
-        }
-        th, td {
-            padding: 10px 15px;
-            text-align: left;
-        }
-        th {
-            background-color: var(--light-gray);
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        button, input[type=submit] {
-            cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 14px;
-            font-weight: 600;
-            background-color: var(--primary);
-            color: white;
-            transition: background-color 0.3s ease;
-        }
-        button:hover, input[type=submit]:hover {
-            background-color: var(--primary-light);
-        }
-        a.button-link {
-            text-decoration: none;
-            background-color: var(--success);
-            padding: 8px 14px;
-            border-radius: 6px;
-            color: white;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-        a.button-link:hover {
-            background-color: #1e8449;
-        }
-        .actions-cell {
-            min-width: 160px;
-        }
-        .form-container {
-            background: white;
-            padding: 25px 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            max-width: 600px;
-            width: 100%;
-            margin-bottom: 50px;
-        }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-        input[type=text], input[type=number], input[type=date], select {
-            width: 100%;
-            padding: 10px 14px;
-            margin-bottom: 18px;
-            border: 2px solid var(--light-gray);
-            border-radius: 8px;
-            font-size: 16px;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+<h2><?= $action === 'modifier' ? '✏️ Modifier une facture' : '➕ Ajouter une facture' ?></h2>
+<form method="post">
+    <input type="hidden" name="action" value="<?= $action === 'modifier' ? 'modifier' : 'ajouter' ?>">
+    <?php if ($numToEdit): ?><input type="hidden" name="num" value="<?= $numToEdit ?>"><?php endif; ?>
+    Fournisseur: <input type="text" name="fournisseur" value="<?= htmlspecialchars($fournisseur_edit) ?>" required><br>
+    Date: <input type="date" name="date" value="<?= htmlspecialchars($date_edit) ?>" required><br><br>
+    <div id="produits-container"></div>
+    <button type="button" onclick="ajouterLigneProduit()">➕ Ajouter un produit</button><br><br>
+    <input type="submit" value="<?= $action === 'modifier' ? 'Modifier la facture' : 'Ajouter la facture' ?>">
+</form>
 
-    <h2>Gestion des Factures</h2>
+<script>
+function ajouterLigneProduit(id='', quantite='', pu='') {
+    const container = document.getElementById("produits-container");
+    const row = document.createElement("div");
+    const produitsOptions = <?php echo json_encode($produits); ?>;
+    let selectHTML = '<select name="idP[]">';
+    selectHTML += '<option value="">-- Choisir un produit --</option>';
+    produitsOptions.forEach(p => {
+        const selected = id == p.idP ? 'selected' : '';
+        selectHTML += `<option value="${p.idP}" ${selected}>${p.designation}</option>`;
+    });
+    selectHTML += '</select>';
 
-    <?php if ($action === 'ajouter' || $action === 'modifier'): ?>
-        <!-- Formulaire ajout / modification -->
-        <div class="form-container">
-            <h3><?= $action === 'modifier' ? 'Modifier une Facture' : 'Ajouter une Facture' ?></h3>
-            <form method="post" action="">
-                <input type="hidden" name="action" value="<?= $action ?>">
-                <?php if ($action === 'modifier'): ?>
-                    <input type="hidden" name="num" value="<?= htmlspecialchars($num) ?>">
+    row.innerHTML = selectHTML +
+        ` Quantité: <input type="number" name="quantite[]" min="1" value="${quantite}" required>` +
+        ` Prix unitaire: <input type="number" name="prix_unitaire[]" step="0.01" min="0" value="${pu}" required><br><br>`;
+    container.appendChild(row);
+}
+
+<?php if ($numToEdit): 
+for ($i = 0; $i < count($idP_edit); $i++): ?>
+ajouterLigneProduit("<?= $idP_edit[$i] ?>", "<?= $quantite_edit[$i] ?>", "<?= $pu_edit[$i] ?>");
+<?php endfor; else: ?>
+ajouterLigneProduit();
+<?php endif; ?>
+</script>
+
+<hr>
+<h2>📋 Liste des factures</h2>
+<table border="1" cellpadding="6">
+    <tr>
+        <th>#</th><th>Fournisseur</th><th>Date</th><th>Produit</th>
+        <th>Quantité</th><th>PU</th><th>Total</th><th>Actions</th>
+    </tr>
+    <?php
+    $grouped = [];
+    foreach ($factures as $f) {
+        $grouped[$f['num']][] = $f;
+    }
+    foreach ($grouped as $num => $lignes):
+        $first = true;
+        foreach ($lignes as $ligne): ?>
+            <tr>
+                <?php if ($first): ?>
+                    <td rowspan="<?= count($lignes) ?>"><?= $num ?></td>
+                    <td rowspan="<?= count($lignes) ?>"><?= htmlspecialchars($ligne['fournisseur']) ?></td>
+                    <td rowspan="<?= count($lignes) ?>"><?= $ligne['date'] ?></td>
                 <?php endif; ?>
-
-                <label for="fournisseur">Fournisseur :</label>
-                <input type="text" id="fournisseur" name="fournisseur" value="<?= htmlspecialchars($fournisseur) ?>" required>
-
-                <label for="prix">Prix :</label>
-                <input type="number" step="0.01" id="prix" name="prix" value="<?= htmlspecialchars($prix) ?>" required>
-
-                <label for="date">Date :</label>
-                <input type="date" id="date" name="date" value="<?= htmlspecialchars($date) ?>" required>
-
-                <label for="idP">Produit :</label>
-                <select id="idP" name="idP" required>
-                    <option value="" disabled <?= $idP === '' ? 'selected' : '' ?>>-- Sélectionner un produit --</option>
-                    <?php foreach ($produits as $produit): ?>
-                        <option value="<?= $produit['idP'] ?>" <?= $produit['idP'] == $idP ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($produit['nom']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-
-                <input type="submit" value="<?= $action === 'modifier' ? 'Modifier' : 'Ajouter' ?>">
-                <a href="gestion_factures.php" style="margin-left: 15px; font-weight: 600; color: var(--danger); cursor: pointer;">Annuler</a>
-            </form>
-        </div>
-    <?php else: ?>
-        <!-- Liste des factures + bouton Ajouter -->
-        <a href="?action=ajouter" style="margin-bottom: 15px; align-self: flex-start;">
-            <button><i class="fas fa-plus"></i> Ajouter une facture</button>
-        </a>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Numéro</th>
-                    <th>Fournisseur</th>
-                    <th>Prix</th>
-                    <th>Date</th>
-                    <th>Produit</th>
-                    <th class="actions-cell">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($factures)): ?>
-                    <tr><td colspan="6" style="text-align:center;">Aucune facture trouvée.</td></tr>
-                <?php else: ?>
-                    <?php foreach ($factures as $facture): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($facture['num']) ?></td>
-                            <td><?= htmlspecialchars($facture['fournisseur']) ?></td>
-                            <td><?= htmlspecialchars($facture['prix']) ?></td>
-                            <td><?= htmlspecialchars($facture['date']) ?></td>
-                            <td>
-                                <?php
-                                $prodName = '';
-                                foreach ($produits as $p) {
-                                    if ($p['idP'] == $facture['idP']) {
-                                        $prodName = $p['nom'];
-                                        break;
-                                    }
-                                }
-                                echo htmlspecialchars($prodName);
-                                ?>
-                            </td>
-                            <td>
-                                <form method="post" action="" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette facture ?');">
-                                    <input type="hidden" name="action" value="supprimer" />
-                                    <input type="hidden" name="num" value="<?= htmlspecialchars($facture['num']) ?>" />
-                                    <button type="submit"><i class="fas fa-trash"></i> Supprimer</button>
-                                </form>
-
-                                <a href="?action=modifier&num=<?= htmlspecialchars($facture['num']) ?>" class="button-link" style="margin-left:8px;">
-                                    <i class="fas fa-edit"></i> Modifier
-                                </a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
+                <td><?= $ligne['idP'] ?></td>
+                <td><?= $ligne['quantite'] ?></td>
+                <td><?= number_format($ligne['prix_unitaire'], 2) ?> DT</td>
+                <td><?= number_format($ligne['prix_total'], 2) ?> DT</td>
+                <?php if ($first): ?>
+                    <td rowspan="<?= count($lignes) ?>">
+                        <form method="post" style="display:inline" onsubmit="return confirm('Voulez-vous vraiment supprimer cette facture ?');">
+                            <input type="hidden" name="action" value="supprimer">
+                            <input type="hidden" name="num" value="<?= $num ?>">
+                            <button type="submit">🗑 Supprimer</button>
+                        </form>
+                        <form method="post" style="display:inline">
+                            <input type="hidden" name="action" value="modifier">
+                            <input type="hidden" name="num" value="<?= $num ?>">
+                            <button type="submit">✏️ Modifier</button>
+                        </form>
+                    </td>
                 <?php endif; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
-
+            </tr>
+        <?php $first = false; endforeach;
+    endforeach; ?>
+</table>
 </body>
 </html>

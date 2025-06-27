@@ -4,43 +4,43 @@ require_once '../config/db.php';
 // Fonction pour récupérer tous les produits
 function getAllProduits() {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM produits");
+    $stmt = $pdo->query("SELECT * FROM Produits");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Fonction pour récupérer un produit par son ID
 function getProduitById($idP) {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT * FROM produits WHERE idP = ?");
+    $stmt = $pdo->prepare("SELECT * FROM Produits WHERE idP = ?");
     $stmt->execute([$idP]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 // Fonction pour ajouter ou modifier un produit
-function saveProduit($idP, $nom, $quantite, $designation, $seuil) {
+function saveProduit($idP, $designation, $seuil) {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM produits WHERE idP = ?");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM Produits WHERE idP = ?");
     $stmt->execute([$idP]);
     $exists = $stmt->fetchColumn() > 0;
 
     if ($exists) {
-        $stmt = $pdo->prepare("UPDATE produits SET nom = ?, quantite = ?, designation = ?, seuil = ? WHERE idP = ?");
-        return $stmt->execute([$nom, $quantite, $designation, $seuil, $idP]);
+        $stmt = $pdo->prepare("UPDATE Produits SET designation = ?, seuil = ? WHERE idP = ?");
+        return $stmt->execute([$designation, $seuil, $idP]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO produits (idP, nom, quantite, designation, seuil) VALUES (?, ?, ?, ?, ?)");
-        return $stmt->execute([$idP, $nom, $quantite, $designation, $seuil]);
+        $stmt = $pdo->prepare("INSERT INTO Produits (idP, designation, seuil) VALUES (?, ?, ?)");
+        return $stmt->execute([$idP, $designation, $seuil]);
     }
 }
 
 // Fonction pour supprimer un produit
 function supprimerProduit($idP) {
     global $pdo;
-    $stmt = $pdo->prepare("DELETE FROM produits WHERE idP = ?");
+    $stmt = $pdo->prepare("DELETE FROM Produits WHERE idP = ?");
     return $stmt->execute([$idP]);
 }
 
 // Initialiser les variables pour le formulaire
-$nom = $quantite = $designation = $idP = $seuil = '';
+$designation = $idP = $seuil = '';
 $action = $_GET['action'] ?? '';
 $idP = $_GET['idP'] ?? null;
 
@@ -51,8 +51,6 @@ if ($action === 'modifier' && $idP) {
     $produit = getProduitById($idP);
     if ($produit) {
         $idP = $produit['idP'];
-        $nom = $produit['nom'];
-        $quantite = $produit['quantite'];
         $designation = $produit['designation'];
         $seuil = $produit['seuil'];
     }
@@ -61,16 +59,14 @@ if ($action === 'modifier' && $idP) {
 // Gestion des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idP = $_POST['idP'] ?? '';
-    $nom = $_POST['nom'] ?? '';
-    $quantite = $_POST['quantite'] ?? '';
     $designation = $_POST['designation'] ?? '';
     $seuil = $_POST['seuil'] ?? '';
     $action = $_POST['action'] ?? '';
 
-    if (empty($nom) || empty($quantite) || empty($designation) || empty($idP) || empty($seuil)) {
+    if (empty($designation) || empty($idP) || empty($seuil)) {
         echo "<script>alert('Tous les champs sont obligatoires.');</script>";
     } else {
-        saveProduit($idP, $nom, $quantite, $designation, $seuil);
+        saveProduit($idP, $designation, $seuil);
         header("Location: gestion_produits.php");
         exit();
     }
@@ -86,7 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
     exit();
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -124,7 +119,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             color: var(--dark);
         }
 
-        /* Sidebar */
         .sidebar {
             width: 260px;
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
@@ -146,9 +140,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             margin-bottom: 20px;
         }
 
-        .logo i {
-            font-size: 28px;
-            margin-right: 12px;
+        .logo img {
+            height: 60px;
+            margin-right: 10px;
         }
 
         .logo h1 {
@@ -190,7 +184,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             color: white;
         }
 
-        /* Main Content */
         .main-content {
             flex: 1;
             margin-left: 260px;
@@ -207,7 +200,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             color: var(--primary);
         }
 
-        /* Table styles */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -231,11 +223,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             background-color: #f2f2f2;
         }
 
-        .low-stock {
-            color: var(--danger);
-            font-weight: bold;
-        }
-
         .action-buttons {
             margin-bottom: 20px;
         }
@@ -253,7 +240,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             margin-right: 10px;
         }
 
-        /* Form styles */
         .form-container {
             margin-top: 20px;
             background: white;
@@ -296,13 +282,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             font-weight: 600;
             cursor: pointer;
         }
+
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">
-            <i class="fas fa-warehouse"></i>
+            <img src="../icon\images.jpg" alt="Medis Logo">
             <h1>Gestion Stock</h1>
         </div>
         <nav class="nav-links">
@@ -320,10 +315,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
     <!-- Main Content -->
     <main class="main-content">
         <div class="dashboard-title">
-            <h2>Gestion des Produits</h2>
+            <h2>Gestion des Produits – Laboratoires Medis</h2>
         </div>
 
-        <!-- Afficher le formulaire d'ajout/modification si nécessaire -->
         <?php if ($action === 'ajouter' || $action === 'modifier'): ?>
             <div class="form-container">
                 <h3><?= $action === 'modifier' ? 'Modifier un Produit' : 'Ajouter un Produit' ?></h3>
@@ -331,10 +325,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                     <input type="hidden" name="action" value="<?= $action ?>">
                     <label for="idP">ID:</label>
                     <input type="text" id="idP" name="idP" value="<?= htmlspecialchars($idP) ?>" required>
-                    <label for="nom">Nom:</label>
-                    <input type="text" id="nom" name="nom" value="<?= htmlspecialchars($nom) ?>" required>
-                    <label for="quantite">Quantité:</label>
-                    <input type="number" id="quantite" name="quantite" value="<?= htmlspecialchars($quantite) ?>" required>
                     <label for="designation">Désignation:</label>
                     <textarea id="designation" name="designation" required><?= htmlspecialchars($designation) ?></textarea>
                     <label for="seuil">Seuil:</label>
@@ -343,18 +333,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                 </form>
             </div>
         <?php else: ?>
-            <!-- Liste des produits -->
             <div class="form-container">
                 <div class="action-buttons">
-                    <a href="gestion_produits.php?action=ajouter">Ajouter un Produit</a>
+                    <a href="gestion_produits.php?action=ajouter">➕ Ajouter un Produit</a>
                 </div>
-                <h3>Liste des Produits</h3>
+                <h3>📦 Liste des Produits</h3>
                 <table>
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Nom</th>
-                            <th>Quantité</th>
                             <th>Désignation</th>
                             <th>Seuil</th>
                             <th>Actions</th>
@@ -364,20 +351,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                         <?php foreach ($produits as $produit): ?>
                         <tr>
                             <td><?= htmlspecialchars($produit['idP']) ?></td>
-                            <td><?= htmlspecialchars($produit['nom']) ?></td>
-                            <td class="<?= $produit['quantite'] <= $produit['seuil'] ? 'low-stock' : '' ?>">
-                                <?= htmlspecialchars($produit['quantite']) ?>
-                            </td>
                             <td><?= htmlspecialchars($produit['designation']) ?></td>
                             <td><?= htmlspecialchars($produit['seuil']) ?></td>
                             <td>
                                 <form method="post" action="" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce produit?');">
                                     <input type="hidden" name="action" value="supprimer">
                                     <input type="hidden" name="idP" value="<?= $produit['idP'] ?>">
-                                    <button type="submit">Supprimer</button>
+                                    <button type="submit" style="background-color:#e74c3c; color: white; padding: 5px 10px; border: none; border-radius: 5px;">🗑 Supprimer</button>
                                 </form>
                                 <a href="gestion_produits.php?action=modifier&idP=<?= $produit['idP'] ?>" style="display: inline;">
-                                    <button>Modifier</button>
+                                    <button style="background-color:#1e3799; color: white; padding: 5px 10px; border: none; border-radius: 5px;">✏️ Modifier</button>
                                 </a>
                             </td>
                         </tr>
@@ -386,6 +369,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                 </table>
             </div>
         <?php endif; ?>
+
+        <footer>
+            <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
+            <p>📍 Adresse : Rue de l'Innovation, Nabeul, Tunisie</p>
+            <p>📞 Téléphone : +216 72 000 000 | 📧 Email : contact@medis.com.tn</p>
+        </footer>
     </main>
 </body>
 </html>
