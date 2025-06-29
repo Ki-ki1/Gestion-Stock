@@ -1,216 +1,172 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de Bord Administrateur</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #0c2461;
-            --primary-light: #1e3799;
-            --secondary: #2c3e50;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --light: #f8f9fa;
-            --dark: #343a40;
-            --gray: #6c757d;
-            --light-gray: #e9ecef;
-            --border: #dee2e6;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StockPro | Tableau de bord Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    :root {
+      --primary: #0c2461;
+      --primary-light: #1e3799;
+      --gray: #6c757d;
+      --light-gray: #e9ecef;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-        body {
-            background-color: #f5f7fb;
-            display: flex;
-            min-height: 100vh;
-            color: var(--dark);
-        }
+    body {
+      background-color: #f5f7fb;
+      display: flex;
+      min-height: 100vh;
+      color: var(--gray);
+    }
 
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white;
-            padding: 20px 0;
-            height: 100vh;
-            position: fixed;
-            overflow-y: auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-            transition: all 0.3s ease;
-        }
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      padding: 20px 0;
+      height: 100vh;
+      position: fixed;
+      overflow-y: auto;
+    }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
-        }
+    .logo {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      margin-bottom: 20px;
+    }
 
-        .logo i {
-            font-size: 28px;
-            margin-right: 12px;
-        }
+    .logo img {
+      height: 60px;
+      margin-right: 10px;
+    }
 
-        .logo h1 {
-            font-size: 22px;
-            font-weight: 700;
-        }
+    .logo h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
 
-        .nav-links {
-            padding: 0 15px;
-        }
+    .nav-links {
+      padding: 0 15px;
+    }
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 14px 15px;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
 
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(255, 255, 255, 0.1);
-        }
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
 
-        .nav-item i,
-        .nav-item img {
-            font-size: 20px;
-            margin-right: 15px;
-            width: 24px;
-            height: 24px;
-            object-fit: contain;
-        }
+    .nav-item i {
+      font-size: 20px;
+      margin-right: 15px;
+    }
 
-        .nav-item span {
-            font-size: 16px;
-            font-weight: 500;
-            color: white;
-        }
+    .nav-item span a {
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+      text-decoration: none;
+    }
 
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            padding: 20px;
-        }
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
-        .dashboard-title {
-            margin-bottom: 25px;
-        }
+    .dashboard-title h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 25px;
+    }
 
-        .dashboard-title h2 {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary);
-        }
+    footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      padding: 15px 0;
+    }
 
-        /* Table styles */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 70px;
+      }
 
-        table, th, td {
-            border: 1px solid var(--border);
-        }
+      .main-content {
+        margin-left: 70px;
+      }
 
-        th, td {
-            padding: 12px;
-            text-align: left;
-        }
+      .logo h1,
+      .nav-item span {
+        display: none;
+      }
 
-        th {
-            background-color: var(--light-gray);
-        }
-
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 70px;
-            }
-
-            .main-content {
-                margin-left: 70px;
-            }
-
-            .logo h1,
-            .nav-item span,
-            .user-info {
-                display: none;
-            }
-
-            .nav-item {
-                justify-content: center;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .top-bar {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .search-bar {
-                width: 100%;
-            }
-
-            .user-actions {
-                width: 100%;
-                justify-content: space-between;
-            }
-        }
-    </style>
+      .nav-item {
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo">
-            <i class="fas fa-warehouse"></i>
-            <h1>Gestion Stock</h1>
-        </div>
-        <nav class="nav-links">
-            <div class="nav-item">
-                <i class="fas fa-users"></i>
-                <span><a href="gestion_utilisateurs.php" style="color: white;">Gestion des Utilisateurs</a></span>
-            </div>
-            <div class="nav-item">
-                <i class="fas fa-boxes"></i>
-                <span><a href="gestion_produits.php" style="color: white;">Gestion des Produits</a></span>
-            </div>
-            <div class="nav-item">
-                <i class="fas fa-file-invoice"></i>
-                <span><a href="gestion_factures.php" style="color: white;">Gestion des Factures</a></span>
-            </div>
-            <div class="nav-item">
-                <i class="fas fa-shopping-cart"></i>
-                <span><a href="gestion_demandes.php" style="color: white;">Gestion des Demandes</a></span>
-            </div>
-        </nav>
-    </aside>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="../icon/images.jpg" alt="Medis Logo">
+      <h1>Gestion Stock</h1>
+    </div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="dashboard-title">
-            <h2>Tableau de Bord Administrateur</h2>
-        </div>
-    </main>
+    <nav class="nav-links">
+      <div class="nav-item">
+        <i class="fas fa-users"></i>
+        <span><a href="gestion_utilisateurs.php">Utilisateurs</a></span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-box"></i>
+        <span><a href="gestion_produits.php">Produits</a></span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-file-invoice"></i>
+        <span><a href="gestion_factures.php">Factures</a></span>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-shopping-cart"></i>
+        <span><a href="gestion_demandes.php">Demandes</a></span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="dashboard-title">
+      <h2>Tableau de bord Administrateur</h2>
+    </div>
+
+    <footer>
+      <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
+      <p>📍 Rue de l'Innovation, Nabeul, Tunisie</p>
+      <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>
+    </footer>
+  </main>
 </body>
 </html>

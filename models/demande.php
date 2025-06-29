@@ -6,7 +6,7 @@ class Demande {
         global $pdo;
         try {
             $stmt = $pdo->query("
-                SELECT d.*, u.nom AS user_nom, u.prenom AS user_prenom, p.nom AS produit_nom
+                SELECT d.*, u.nom AS user_nom, u.prenom AS user_prenom, p.designation AS produit_designation
                 FROM Demandes d
                 JOIN Utilisateurs u ON d.utilisateur_id = u.matricule
                 LEFT JOIN Produits p ON d.idProduit = p.idP
