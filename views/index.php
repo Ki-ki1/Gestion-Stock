@@ -1,3 +1,53 @@
+<?php
+session_start();
+require_once '../config/db.php';
+
+$error = ""; // Initialize error variable
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $login = $_POST['login'] ?? '';
+    $mdp = $_POST['mdp'] ?? '';
+
+    if (empty($login) || empty($mdp)) {
+        $error = "Veuillez remplir tous les champs.";
+    } else {
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM Utilisateurs WHERE login = ?");
+            $stmt->execute([$login]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user && $mdp === $user['mdp']) {
+                $_SESSION['user'] = $user;
+                $id = $user['matricule'];
+
+                $stmtAdmin = $pdo->prepare("SELECT * FROM Administrateurs WHERE id_admin = ?");
+                $stmtAdmin->execute([$id]);
+                $stmtAgent = $pdo->prepare("SELECT * FROM Agents WHERE id_agent = ?");
+                $stmtAgent->execute([$id]);
+
+                if ($stmtAdmin->fetch()) {
+                    $_SESSION['role'] = 'admin';
+                    header("Location: ../views/dashboard_admin.php");
+                    exit;
+                } elseif ($stmtAgent->fetch()) {
+                    $_SESSION['role'] = 'agent';
+                    header("Location: ../views/dashboard_agent.php");
+                    exit;
+                } else {
+                    $_SESSION['role'] = 'utilisateur';
+                    header("Location: ../views/dashboard_user.php");
+                    exit;
+                }
+            } else {
+                $error = "Login ou mot de passe incorrect.";
+            }
+        } catch (PDOException $e) {
+            $error = "Erreur : " . $e->getMessage();
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -44,8 +94,8 @@
             margin-bottom: 30px;
         }
         .logo img {
-            width: 80px; /* Increased width */
-            height: 80px; /* Increased height */
+            width: 80px;
+            height: 80px;
         }
         .logo h1 {
             color: #0c2461;
@@ -122,6 +172,11 @@
             color: #3498db;
             text-decoration: none;
         }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-bottom: 20px;
+        }
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -136,10 +191,10 @@
     <div class="container">
         <div class="login-panel">
             <div class="logo">
-                <img src="icon/images.jpg" alt="Medis Logo">
+                <img src="../icon/images.jpg" alt="Medis Logo">
                 <h1>Gestion Stock</h1>
             </div>
-            <form action="controllers/auth.php" method="post">
+            <form method="post">
                 <div class="input-group">
                     <label for="login">Identifiant :</label>
                     <i class="fas fa-user"></i>
@@ -151,6 +206,9 @@
                     <input type="password" id="mdp" name="mdp" placeholder="Entrer votre mot de passe" required />
                 </div>
                 <button type="submit">Connexion</button>
+                <?php if (!empty($error)): ?>
+                    <p class="error-message"><?php echo htmlspecialchars($error); ?></p>
+                <?php endif; ?>
             </form>
             <div class="footer">
                 <p>&copy; 2025 Les Laboratoires Medis. Tous droits réservés.</p>

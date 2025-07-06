@@ -1,3 +1,8 @@
+<?php
+require_once '../config/db.php';
+require_once '../models/produit.php';
+$produits = Produit::getAllProduits();
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -9,32 +14,21 @@
     :root {
       --primary: #0c2461;
       --primary-light: #1e3799;
-      --secondary: #2c3e50;
-      --success: #27ae60;
-      --warning: #f39c12;
-      --danger: #e74c3c;
-      --light: #f8f9fa;
-      --dark: #343a40;
-      --gray: #6c757d;
       --light-gray: #e9ecef;
       --border: #dee2e6;
     }
-
     * {
-      margin: 0;
-      padding: 0;
       box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
     }
-
     body {
-      background-color: #f5f7fb;
+      margin: 0;
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
       min-height: 100vh;
-      color: var(--dark);
+      background-color: var(--primary);
+      color: white;
     }
-
     .sidebar {
       width: 260px;
       background: linear-gradient(135deg, var(--primary), var(--primary-light));
@@ -42,168 +36,87 @@
       padding: 20px 0;
       height: 100vh;
       position: fixed;
-      overflow-y: auto;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-      z-index: 100;
-      transition: all 0.3s ease;
     }
-
     .logo {
       display: flex;
       align-items: center;
-      padding: 0 20px 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 20px;
+      margin-bottom: 40px;
+      padding: 0 20px;
     }
-
     .logo img {
-      height: 40px;
+      width: 50px;
+      height: auto;
       margin-right: 10px;
     }
-
     .logo h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: white;
+      margin: 0;
+      font-size: 20px;
     }
-
     .nav-links {
-      padding: 0 15px;
+      display: flex;
+      flex-direction: column;
     }
-
     .nav-item {
       display: flex;
       align-items: center;
-      padding: 14px 15px;
-      border-radius: 8px;
-      margin-bottom: 5px;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-
-    .nav-item:hover,
-    .nav-item.active {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .nav-item i,
-    .nav-item img {
-      font-size: 20px;
-      margin-right: 15px;
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
-    }
-
-    .nav-item span a {
-      font-size: 16px;
-      font-weight: 500;
+      padding: 10px 20px;
+      margin: 10px 0;
       color: white;
       text-decoration: none;
     }
-
+    .nav-item i {
+      margin-right: 10px;
+    }
+    .nav-item a {
+      color: white;
+      text-decoration: none;
+    }
+    .nav-item.active {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+    }
     .main-content {
       flex: 1;
       margin-left: 260px;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      background-color: white;
+      color: black;
     }
-
-    .dashboard-title {
-      margin-bottom: 15px;
-    }
-
-    .dashboard-title h2 {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
-    /* Champ de recherche */
-    #searchInput {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 16px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-bottom: 15px;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-    #searchInput:focus {
-      border-color: var(--primary);
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 20px;
     }
-
-    table, th, td {
-      border: 1px solid var(--border);
-    }
-
     th, td {
       padding: 12px;
+      border: 1px solid var(--border);
       text-align: left;
     }
-
     th {
       background-color: var(--light-gray);
       cursor: pointer;
-      user-select: none;
-      position: relative;
     }
-
-    th.sort-asc::after {
-      content: " ▲";
-      position: absolute;
-      right: 10px;
-    }
-
-    th.sort-desc::after {
-      content: " ▼";
-      position: absolute;
-      right: 10px;
-    }
-
     tr:nth-child(even) {
-      background-color: #f2f2f2;
+      background-color: #f9f9f9;
     }
-
-    footer {
-      margin-top: auto;
+    .search-input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+    .footer {
+      background-color: white;
+      color: black;
       text-align: center;
+      padding: 10px;
+      margin-top: auto;
       font-size: 14px;
-      color: #666;
-      padding: 15px 0;
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 70px;
-      }
-
-      .main-content {
-        margin-left: 70px;
-      }
-
-      .logo h1,
-      .nav-item span {
-        display: none;
-      }
-
-      .nav-item {
-        justify-content: center;
-      }
     }
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="logo">
       <img src="../icon/images.jpg" alt="Medis Logo">
@@ -211,123 +124,73 @@
     </div>
     <nav class="nav-links">
       <div class="nav-item">
-        <i class="fas fa-shopping-cart"></i>
-        <span><a href="demandes.php">Demandes</a></span>
+        <i class="fas fa-file-invoice"></i>
+        <a href="gestion_factures.php">Factures</a>
       </div>
       <div class="nav-item active">
         <i class="fas fa-box"></i>
-        <span><a href="produits.php">Produits</a></span>
+        <a href="produits.php">Produits</a>
       </div>
     </nav>
   </aside>
-
-  <!-- Main Content -->
   <main class="main-content">
-    <div class="dashboard-title">
-      <h2>Liste des Produits</h2>
+    <h2>Liste des Produits – Laboratoires Medis</h2>
+    <div class="form-container">
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Rechercher un produit...">
+      <table id="produitsTable">
+        <thead>
+          <tr>
+            <th data-column="0">ID</th>
+            <th data-column="1">Désignation</th>
+            <th data-column="2">Quantité</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (!empty($produits)): ?>
+            <?php foreach ($produits as $produit): ?>
+              <tr>
+                <td><?= htmlspecialchars($produit['idP']) ?></td>
+                <td><?= htmlspecialchars($produit['designation']) ?></td>
+                <td><?= htmlspecialchars($produit['quantite']) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="3">Aucun produit trouvé.</td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
     </div>
-
-    <!-- Champ de recherche -->
-    <input type="text" id="searchInput" placeholder="Rechercher dans les produits...">
-
-    <table id="produitsTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Désignation</th>
-          <th>Seuil</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        require_once '../models/produit.php';
-        $produits = Produit::getAllProduits();
-
-        if (!empty($produits)) {
-          foreach ($produits as $produit) {
-            // Récupérer la quantité approuvée pour ce produit
-            $quantiteApprouvee = Produit::getQuantiteApprouvee($produit['idP']);
-            $seuil = (int)$produit['seuil'];
-            $alerte = ($quantiteApprouvee >= $seuil);
-        ?>
-        <tr>
-          <td><?= htmlspecialchars($produit['idP']) ?></td>
-          <td><?= htmlspecialchars($produit['designation']) ?></td>
-          <td style="color: <?= $alerte ? 'red' : 'inherit' ?>;">
-            <?= htmlspecialchars($seuil) ?>
-          </td>
-        </tr>
-        <?php
-          }
-        } else {
-        ?>
-        <tr>
-          <td colspan="3">Aucun produit trouvé.</td>
-        </tr>
-        <?php
-        }
-        ?>
-      </tbody>
-    </table>
-
-    <footer>
-      <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
-      <p>📍 Rue de l'Innovation, Nabeul, Tunisie</p>
-      <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>
-    </footer>
   </main>
-
+  <footer class="footer">
+    <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
+    <p>📍 Rue de l'Innovation, Nabeul, Tunisie</p>
+    <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>
+  </footer>
   <script>
-    // Tri des colonnes
-    const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
-
-    const comparer = (idx, asc) => (a, b) => {
-      const v1 = getCellValue(a, idx);
-      const v2 = getCellValue(b, idx);
-
-      const n1 = parseFloat(v1.replace(',', '.'));
-      const n2 = parseFloat(v2.replace(',', '.'));
-
-      if (!isNaN(n1) && !isNaN(n2)) {
-        return (n1 - n2) * (asc ? 1 : -1);
-      } else {
-        return v1.toString().localeCompare(v2) * (asc ? 1 : -1);
-      }
-    };
-
-    document.querySelectorAll('#produitsTable th').forEach((th, index) => {
-      th.style.cursor = 'pointer';
-
-      th.addEventListener('click', () => {
-        const table = th.closest('table');
-        const tbody = table.querySelector('tbody');
-
-        // Enlever les classes de tri sur les autres colonnes
-        Array.from(table.querySelectorAll('th')).forEach(th2 => {
-          if (th2 !== th) th2.classList.remove('sort-asc', 'sort-desc');
-        });
-
-        const asc = !th.classList.contains('sort-asc');
-        th.classList.toggle('sort-asc', asc);
-        th.classList.toggle('sort-desc', !asc);
-
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        rows.sort(comparer(index, asc));
-        rows.forEach(row => tbody.appendChild(row));
+    document.getElementById("searchInput").addEventListener("keyup", function() {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#produitsTable tbody tr");
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
       });
     });
-
-    // Recherche dans le tableau
-    const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', function() {
-      const filter = this.value.toLowerCase();
-      const rows = document.querySelectorAll('#produitsTable tbody tr');
-
-      rows.forEach(row => {
-        const cellsText = Array.from(row.children)
-          .map(td => td.textContent.toLowerCase())
-          .join(' ');
-        row.style.display = cellsText.includes(filter) ? '' : 'none';
+    document.querySelectorAll("#produitsTable th[data-column]").forEach(th => {
+      th.addEventListener("click", () => {
+        const table = th.closest("table");
+        const tbody = table.querySelector("tbody");
+        const index = parseInt(th.getAttribute("data-column"));
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const asc = th.classList.toggle("asc");
+        rows.sort((a, b) => {
+          const cellA = a.children[index].textContent.trim();
+          const cellB = b.children[index].textContent.trim();
+          return asc ? cellA.localeCompare(cellB, undefined, { numeric: true }) : cellB.localeCompare(cellA, undefined, { numeric: true });
+        });
+        tbody.innerHTML = "";
+        rows.forEach(row => tbody.appendChild(row));
       });
     });
   </script>

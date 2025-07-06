@@ -1,151 +1,114 @@
 <?php
-// dashboard_user.php
 $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StockPro | Tableau de bord</title>
+    <meta charset="UTF-8">
+    <title>Formulaire de Demande</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
         :root {
             --primary: #0c2461;
-            --primary-light: #1e3799;
-            --success: #27ae60;
             --light-gray: #e9ecef;
-            --dark: #343a40;
+            --danger: #e74c3c;
         }
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         body {
-            background-color: #f5f7fb;
+            font-family: Arial, sans-serif;
+            background: #f3f6fa;
+            margin: 0;
             display: flex;
             min-height: 100vh;
-            color: var(--dark);
         }
         .sidebar {
             width: 260px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            background: linear-gradient(135deg, var(--primary), #1e3799);
             color: white;
-            padding: 20px 0;
-            height: 100vh;
+            padding: 20px;
             position: fixed;
-            overflow-y: auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            z-index: 100;
+            height: 100vh;
         }
-        .logo {
+        .sidebar .logo {
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
-        .logo img {
-            height: 60px;
+        .sidebar .logo img {
+            width: 36px;
             margin-right: 10px;
         }
-        .logo h1 {
+        .sidebar h1 {
             font-size: 20px;
-            font-weight: 700;
         }
         .nav-links {
-            padding: 0 15px;
+            margin-top: 30px;
         }
         .nav-item {
             display: flex;
             align-items: center;
-            padding: 14px 15px;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            transition: all 0.3s ease;
-            text-decoration: none;
+            padding: 12px;
             color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+        .nav-item i {
+            margin-right: 10px;
         }
         .nav-item:hover,
         .nav-item.active {
-            background: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.1);
         }
-        .nav-item i {
-            font-size: 20px;
-            margin-right: 15px;
-        }
-        .nav-item span {
-            font-size: 16px;
-            font-weight: 500;
-        }
-        .main-content {
-            flex: 1;
+        main {
             margin-left: 260px;
-            padding: 20px;
+            flex: 1;
+            padding: 30px;
         }
-        .dashboard-title h2 {
-            font-size: 28px;
-            font-weight: 700;
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            margin-bottom: 15px;
             color: var(--primary);
         }
-        .form-container {
-            margin-top: 20px;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            max-width: 700px;
-        }
         footer {
-            margin-top: 40px;
             text-align: center;
             font-size: 14px;
             color: #666;
-        }
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 70px;
-            }
-            .main-content {
-                margin-left: 70px;
-            }
-            .logo h1,
-            .nav-item span {
-                display: none;
-            }
-            .nav-item {
-                justify-content: center;
-            }
+            padding: 15px 0;
+            border-top: 1px solid #ccc;
+            background: #fff;
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">
             <img src="../icon/images.jpg" alt="Medis Logo">
             <h1>Gestion Stock</h1>
         </div>
         <nav class="nav-links">
-            <a href="dashboard_user.php" class="nav-item <?= $currentPage === 'dashboard_user.php' ? 'active' : '' ?>">
+            <a href="formulaire_demande.php" class="nav-item active">
                 <i class="fas fa-shopping-cart"></i>
                 <span>Demandes</span>
             </a>
-            <a href="historique_demandes.php" class="nav-item <?= $currentPage === 'historique_demandes.php' ? 'active' : '' ?>">
+            <a href="historique_demandes.php" class="nav-item">
                 <i class="fas fa-clock-rotate-left"></i>
                 <span>Historique demandes</span>
             </a>
         </nav>
     </aside>
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="dashboard-title">
-            <h2>Tableau de bord utilisateur</h2>
-        </div>
-        <!-- Formulaire de demande -->
-        <div class="form-container">
-            <h3 style="margin-bottom: 20px; color: var(--primary); font-size: 22px;">Créer une nouvelle demande</h3>
+    <main>
+        <div class="container">
+            <h2>Formulaire de Demande</h2>
             <form action="../controllers/demandes.php" method="post">
                 <div style="margin-bottom: 20px;">
                     <label for="description" style="display: block; font-weight: 600; margin-bottom: 8px;">Description :</label>
@@ -175,8 +138,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <input type="submit" value="Envoyer la demande" style="padding: 12px 25px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;" />
             </form>
         </div>
-        <!-- Footer avec contact -->
-        <footer>
+         <footer>
             <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
             <p>📍 Rue de l'Innovation, Nabeul, Tunisie</p>
             <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>
@@ -201,11 +163,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             `;
             container.appendChild(block);
         }
-
-        // Rediriger automatiquement vers la page d'historique des demandes
-        window.onload = function() {
-            window.location.href = 'historique_demandes.php';
-        };
     </script>
 </body>
 </html>

@@ -104,7 +104,6 @@
       font-weight: 700;
       color: var(--primary);
     }
-
     /* Champ de recherche */
     #searchInput {
       width: 100%;
@@ -119,7 +118,6 @@
     #searchInput:focus {
       border-color: var(--primary);
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -158,6 +156,18 @@
       color: #666;
       padding: 15px 0;
     }
+    .status-symbol {
+      font-size: 20px;
+    }
+    .status-pending {
+      color: var(--warning);
+    }
+    .status-approved {
+      color: var(--success);
+    }
+    .status-rejected {
+      color: var(--danger);
+    }
     @media (max-width: 768px) {
       .sidebar {
         width: 70px;
@@ -193,16 +203,13 @@
       </div>
     </nav>
   </aside>
-
   <!-- Main Content -->
   <main class="main-content">
     <div class="dashboard-title">
       <h2>Liste des Demandes</h2>
     </div>
-
     <!-- Champ de recherche -->
     <input type="text" id="searchInput" placeholder="Rechercher dans les demandes...">
-
     <table id="demandesTable">
       <thead>
         <tr>
@@ -212,7 +219,7 @@
           <th>Description</th>
           <th>Nom</th>
           <th>Prénom</th>
-          <th>Produit</th>
+          <th>Date</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -221,17 +228,34 @@
         require_once '../models/Demande.php';
         $demandes = Demande::getAllDemandes();
 
+        function generateDateFromId($id) {
+            // Utiliser l'identifiant pour générer une date pseudo-aléatoire mais déterministe
+            srand($id);
+            $randomDays = rand(0, 365);
+            $date = date('Y-m-d', strtotime("-$randomDays days"));
+            return $date;
+        }
+
         if (!empty($demandes)) {
           foreach ($demandes as $demande) {
+            if ($demande['etat'] !== 'Approuvée') {
         ?>
         <tr>
           <td><?= htmlspecialchars($demande['numD']) ?></td>
           <td><?= htmlspecialchars($demande['quantite']) ?></td>
-          <td><?= htmlspecialchars($demande['etat']) ?></td>
+          <td>
+            <?php
+            if ($demande['etat'] === 'En attente') {
+              echo '<i class="fas fa-clock status-symbol status-pending"></i>';
+            } elseif ($demande['etat'] === 'Rejetée') {
+              echo '<i class="fas fa-times-circle status-symbol status-rejected"></i>';
+            }
+            ?>
+          </td>
           <td><?= htmlspecialchars($demande['description']) ?></td>
           <td><?= htmlspecialchars($demande['user_nom']) ?></td>
           <td><?= htmlspecialchars($demande['user_prenom']) ?></td>
-          <td><?= htmlspecialchars($demande['produit_designation']) ?></td>
+          <td><?= generateDateFromId($demande['numD']) ?></td>
           <td>
             <select name="etat" onchange="updateEtat(<?= $demande['numD'] ?>, this.value)">
               <option value="En attente" <?= $demande['etat'] === 'En attente' ? 'selected' : '' ?>>En attente</option>
@@ -241,25 +265,24 @@
           </td>
         </tr>
         <?php
+            }
           }
         } else {
         ?>
         <tr>
-          <td colspan="8">Aucune demande trouvée.</td>
+          <td colspan="7">Aucune demande trouvée.</td>
         </tr>
         <?php
         }
         ?>
       </tbody>
     </table>
-
     <footer>
       <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
       <p>📍 Rue de l'Innovation, Nabeul, Tunisie</p>
       <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>
     </footer>
   </main>
-
   <script>
     // Fonction pour mettre à jour l'état via AJAX
     function updateEtat(numD, etat) {
@@ -269,66 +292,54 @@
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
           alert(xhr.responseText);
+          location.reload(); // Recharger la page pour voir les changements
         }
       };
       xhr.send("numD=" + encodeURIComponent(numD) + "&etat=" + encodeURIComponent(etat));
     }
-
     // Tri des colonnes (sauf la dernière colonne "Action")
     const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
-
     const comparer = (idx, asc) => (a, b) => {
       const v1 = getCellValue(a, idx);
       const v2 = getCellValue(b, idx);
-
       const n1 = parseFloat(v1.replace(',', '.'));
       const n2 = parseFloat(v2.replace(',', '.'));
-
       if (!isNaN(n1) && !isNaN(n2)) {
         return (n1 - n2) * (asc ? 1 : -1);
       } else {
         return v1.toString().localeCompare(v2) * (asc ? 1 : -1);
       }
     };
-
     document.querySelectorAll('#demandesTable th').forEach((th, index) => {
       // Ne pas activer le tri sur la dernière colonne "Action"
-      if (index === 7) return;
-
+      if (index === 6) return;
       th.style.cursor = 'pointer';
-
       th.addEventListener('click', () => {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-
         // Enlever les classes de tri sur les autres colonnes
         Array.from(table.querySelectorAll('th')).forEach(th2 => {
           if (th2 !== th) th2.classList.remove('sort-asc', 'sort-desc');
         });
-
         const asc = !th.classList.contains('sort-asc');
         th.classList.toggle('sort-asc', asc);
         th.classList.toggle('sort-desc', !asc);
-
         const rows = Array.from(tbody.querySelectorAll('tr'));
         rows.sort(comparer(index, asc));
         rows.forEach(row => tbody.appendChild(row));
       });
     });
-
     // Recherche dans le tableau
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', function() {
       const filter = this.value.toLowerCase();
       const rows = document.querySelectorAll('#demandesTable tbody tr');
-
       rows.forEach(row => {
         // On teste si la ligne contient le texte dans n'importe quelle cellule (hors colonne action)
         const cellsText = Array.from(row.children)
-          .slice(0, 7) // Ignorer la dernière colonne
+          .slice(0, 6) // Ignorer la dernière colonne
           .map(td => td.textContent.toLowerCase())
           .join(' ');
-
         row.style.display = cellsText.includes(filter) ? '' : 'none';
       });
     });

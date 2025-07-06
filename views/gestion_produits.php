@@ -14,18 +14,18 @@ function getProduitById($idP) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function saveProduit($idP, $designation, $seuil) {
+function saveProduit($idP, $designation, $seuil, $quantite) {
     global $pdo;
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM Produits WHERE idP = ?");
     $stmt->execute([$idP]);
     $exists = $stmt->fetchColumn() > 0;
 
     if ($exists) {
-        $stmt = $pdo->prepare("UPDATE Produits SET designation = ?, seuil = ? WHERE idP = ?");
-        return $stmt->execute([$designation, $seuil, $idP]);
+        $stmt = $pdo->prepare("UPDATE Produits SET designation = ?, seuil = ?, quantite = ? WHERE idP = ?");
+        return $stmt->execute([$designation, $seuil, $quantite, $idP]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO Produits (idP, designation, seuil) VALUES (?, ?, ?)");
-        return $stmt->execute([$idP, $designation, $seuil]);
+        $stmt = $pdo->prepare("INSERT INTO Produits (idP, designation, seuil, quantite) VALUES (?, ?, ?, ?)");
+        return $stmt->execute([$idP, $designation, $seuil, $quantite]);
     }
 }
 
@@ -35,10 +35,9 @@ function supprimerProduit($idP) {
     return $stmt->execute([$idP]);
 }
 
-$designation = $idP = $seuil = '';
+$designation = $idP = $seuil = $quantite = '';
 $action = $_GET['action'] ?? '';
 $idP = $_GET['idP'] ?? null;
-
 $produits = getAllProduits();
 
 if ($action === 'modifier' && $idP) {
@@ -47,6 +46,7 @@ if ($action === 'modifier' && $idP) {
         $idP = $produit['idP'];
         $designation = $produit['designation'];
         $seuil = $produit['seuil'];
+        $quantite = $produit['quantite'];
     }
 }
 
@@ -54,12 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idP = $_POST['idP'] ?? '';
     $designation = $_POST['designation'] ?? '';
     $seuil = $_POST['seuil'] ?? '';
+    $quantite = $_POST['quantite'] ?? '';
     $action = $_POST['action'] ?? '';
 
-    if (empty($designation) || empty($idP) || empty($seuil)) {
+    if (empty($designation) || empty($idP) || empty($seuil) || empty($quantite)) {
         echo "<script>alert('Tous les champs sont obligatoires.');</script>";
     } else {
-        saveProduit($idP, $designation, $seuil);
+        saveProduit($idP, $designation, $seuil, $quantite);
         header("Location: gestion_produits.php");
         exit();
     }
@@ -89,18 +90,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             --light-gray: #e9ecef;
             --border: #dee2e6;
         }
-
         * {
             box-sizing: border-box;
             font-family: 'Segoe UI', sans-serif;
         }
-
         body {
             margin: 0;
             display: flex;
             background-color: #f5f7fb;
         }
-
         .sidebar {
             width: 260px;
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
@@ -109,73 +107,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             height: 100vh;
             position: fixed;
         }
-
         .logo {
             display: flex;
             align-items: center;
             padding: 0 20px;
             margin-bottom: 20px;
         }
-
         .logo img {
             height: 60px;
             margin-right: 10px;
         }
-
         .logo h1 {
             font-size: 20px;
         }
-
         .nav-links {
             padding: 0 15px;
         }
-
         .nav-item {
             padding: 14px 15px;
             display: flex;
             align-items: center;
         }
-
         .nav-item a {
             color: white;
             text-decoration: none;
             margin-left: 10px;
         }
-
         .main-content {
             flex: 1;
             margin-left: 260px;
             padding: 20px;
         }
-
         .form-container {
             background: white;
             padding: 30px;
             border-radius: 12px;
             margin-bottom: 30px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-
         th, td {
             padding: 12px;
             border: 1px solid var(--border);
             text-align: left;
         }
-
         th {
             background-color: var(--light-gray);
             cursor: pointer;
         }
-
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-
         input[type="text"], input[type="number"], textarea {
             width: 100%;
             padding: 10px;
@@ -183,7 +168,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             border: 1px solid #ccc;
             margin-bottom: 20px;
         }
-
         input[type="submit"], button, .action-buttons a {
             padding: 10px 20px;
             background: var(--primary);
@@ -193,11 +177,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             cursor: pointer;
             text-decoration: none;
         }
-
         .action-buttons {
             margin-bottom: 20px;
         }
-
         .search-input {
             width: 300px;
             padding: 10px;
@@ -205,7 +187,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             border: 1px solid #ccc;
             margin-bottom: 10px;
         }
-
         footer {
             margin-top: 40px;
             text-align: center;
@@ -231,10 +212,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             </div>
         </nav>
     </aside>
-
     <main class="main-content">
         <h2>Gestion des Produits – Laboratoires Medis</h2>
-
         <?php if ($action === 'ajouter' || $action === 'modifier'): ?>
             <div class="form-container">
                 <h3><?= $action === 'modifier' ? 'Modifier un Produit' : 'Ajouter un Produit' ?></h3>
@@ -246,6 +225,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                     <textarea name="designation" required><?= htmlspecialchars($designation) ?></textarea>
                     <label>Seuil</label>
                     <input type="number" name="seuil" value="<?= htmlspecialchars($seuil) ?>" required>
+                    <label>Quantité</label>
+                    <input type="number" name="quantite" value="<?= htmlspecialchars($quantite) ?>" required>
                     <input type="submit" value="<?= $action === 'modifier' ? 'Modifier' : 'Ajouter' ?>">
                 </form>
             </div>
@@ -262,6 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                             <th data-column="0">ID</th>
                             <th data-column="1">Désignation</th>
                             <th data-column="2">Seuil</th>
+                            <th data-column="3">Quantité</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -271,6 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                             <td><?= htmlspecialchars($produit['idP']) ?></td>
                             <td><?= htmlspecialchars($produit['designation']) ?></td>
                             <td><?= htmlspecialchars($produit['seuil']) ?></td>
+                            <td><?= htmlspecialchars($produit['quantite']) ?></td>
                             <td>
                                 <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer ce produit ?');">
                                     <input type="hidden" name="action" value="supprimer">
@@ -287,14 +270,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                 </table>
             </div>
         <?php endif; ?>
-
         <footer>
             <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
             <p>📍 Rue de l'Innovation, Nabeul, Tunisie</p>
             <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>
         </footer>
     </main>
-
     <script>
         // Recherche dynamique
         const searchInput = document.getElementById("search");
@@ -312,10 +293,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             th.addEventListener("click", () => {
                 const table = th.closest("table");
                 const tbody = table.querySelector("tbody");
-                const index = th.cellIndex;
+                const index = parseInt(th.getAttribute("data-column"));
                 const rows = Array.from(tbody.querySelectorAll("tr"));
                 const asc = th.classList.toggle("asc");
-
                 rows.sort((a, b) => {
                     const cellA = a.children[index].textContent.trim();
                     const cellB = b.children[index].textContent.trim();
@@ -323,7 +303,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                         ? cellA.localeCompare(cellB, undefined, { numeric: true })
                         : cellB.localeCompare(cellA, undefined, { numeric: true });
                 });
-
                 tbody.innerHTML = "";
                 rows.forEach(row => tbody.appendChild(row));
             });

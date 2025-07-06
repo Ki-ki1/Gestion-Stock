@@ -1,25 +1,30 @@
 <?php
 require_once '../config/db.php';
 
+function generateDateFromId($id) {
+    // Utiliser l'identifiant pour générer une date pseudo-aléatoire mais déterministe
+    srand($id);
+    $randomDays = rand(0, 365);
+    $date = date('Y-m-d', strtotime("-$randomDays days"));
+    return $date;
+}
+
 try {
-    $sql = "SELECT 
+    $sql = "SELECT
                 d.numD,
-                u.nom AS nom_utilisateur,
+                d.etat,
                 p.designation AS nom_produit,
                 d.quantite,
                 d.description
             FROM demandes d
-            JOIN utilisateurs u ON d.utilisateur_id = u.matricule
             JOIN produits p ON d.idProduit = p.idP
             ORDER BY d.numD DESC";
-
     $stmt = $pdo->query($sql);
     $demandes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     die("Erreur lors de la récupération : " . $e->getMessage());
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -31,6 +36,8 @@ try {
             --primary: #0c2461;
             --light-gray: #e9ecef;
             --danger: #e74c3c;
+            --success: #28a745;
+            --warning: #ffc107;
         }
         * {
             box-sizing: border-box;
@@ -161,10 +168,21 @@ try {
             border-top: 1px solid #ccc;
             background: #fff;
         }
+        .status-symbol {
+            font-size: 20px;
+        }
+        .status-pending {
+            color: var(--warning);
+        }
+        .status-approved {
+            color: var(--success);
+        }
+        .status-rejected {
+            color: var(--danger);
+        }
     </style>
 </head>
 <body>
-
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">
@@ -172,7 +190,7 @@ try {
             <h1>Gestion Stock</h1>
         </div>
         <nav class="nav-links">
-            <a href="demande_form.php" class="nav-item">
+            <a href="formulaire_demande.php" class="nav-item">
                 <i class="fas fa-shopping-cart"></i>
                 <span>Demandes</span>
             </a>
@@ -182,24 +200,20 @@ try {
             </a>
         </nav>
     </aside>
-
     <!-- Contenu principal -->
     <main>
         <div class="container">
-            <a href="dashboard_user.php" class="back-link"><i class="fas fa-arrow-left"></i> Retour au tableau de bord</a>
-            <h2>Historique des demandes</h2>
-
             <!-- Champ de recherche -->
             <input type="text" id="searchInput" placeholder="Rechercher dans les demandes...">
-
             <table id="demandesTable">
                 <thead>
                     <tr>
                         <th data-column="numD">#</th>
-                        <th data-column="nom_utilisateur">Utilisateur</th>
+                        <th data-column="etat">État</th>
                         <th data-column="nom_produit">Produit</th>
                         <th data-column="quantite">Quantité</th>
                         <th data-column="description">Description</th>
+                        <th data-column="date">Date</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -207,19 +221,29 @@ try {
                         <?php foreach ($demandes as $demande): ?>
                             <tr>
                                 <td><?= htmlspecialchars($demande['numD']) ?></td>
-                                <td><?= htmlspecialchars($demande['nom_utilisateur']) ?></td>
+                                <td>
+                                    <?php
+                                    if ($demande['etat'] === 'En attente') {
+                                        echo '<i class="fas fa-clock status-symbol status-pending"></i>';
+                                    } elseif ($demande['etat'] === 'Approuvée') {
+                                        echo '<i class="fas fa-check-circle status-symbol status-approved"></i>';
+                                    } elseif ($demande['etat'] === 'Rejetée') {
+                                        echo '<i class="fas fa-times-circle status-symbol status-rejected"></i>';
+                                    }
+                                    ?>
+                                </td>
                                 <td><?= htmlspecialchars($demande['nom_produit']) ?></td>
                                 <td><?= htmlspecialchars($demande['quantite']) ?></td>
                                 <td><?= htmlspecialchars($demande['description']) ?></td>
+                                <td><?= generateDateFromId($demande['numD']) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="5">Aucune demande trouvée.</td></tr>
+                        <tr><td colspan="6">Aucune demande trouvée.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-
         <!-- Footer -->
         <footer>
             <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
@@ -227,27 +251,20 @@ try {
             <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>
         </footer>
     </main>
-
     <script>
         // Tri des colonnes
         const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
-
         const comparer = (idx, asc) => (a, b) => {
             const v1 = getCellValue(a, idx);
             const v2 = getCellValue(b, idx);
-
-            // Si ce sont des nombres, comparer numériquement
             const n1 = parseFloat(v1.replace(',', '.'));
             const n2 = parseFloat(v2.replace(',', '.'));
-
             if (!isNaN(n1) && !isNaN(n2)) {
                 return (n1 - n2) * (asc ? 1 : -1);
             } else {
-                // Sinon comparer en chaîne de caractères
                 return v1.toString().localeCompare(v2) * (asc ? 1 : -1);
             }
         };
-
         document.querySelectorAll('#demandesTable th').forEach(th => {
             th.addEventListener('click', () => {
                 const table = th.closest('table');
@@ -255,30 +272,25 @@ try {
                 Array.from(table.querySelectorAll('th')).forEach(th2 => {
                     if (th2 !== th) th2.classList.remove('sort-asc', 'sort-desc');
                 });
-
                 const index = Array.from(th.parentNode.children).indexOf(th);
                 const asc = !th.classList.contains('sort-asc');
                 th.classList.toggle('sort-asc', asc);
                 th.classList.toggle('sort-desc', !asc);
-
                 const rows = Array.from(tbody.querySelectorAll('tr'));
                 rows.sort(comparer(index, asc));
                 rows.forEach(row => tbody.appendChild(row));
             });
         });
-
         // Recherche dans le tableau
         const searchInput = document.getElementById('searchInput');
         searchInput.addEventListener('input', function() {
             const filter = this.value.toLowerCase();
             const rows = document.querySelectorAll('#demandesTable tbody tr');
-
             rows.forEach(row => {
                 const text = row.innerText.toLowerCase();
                 row.style.display = text.includes(filter) ? '' : 'none';
             });
         });
     </script>
-
 </body>
 </html>
