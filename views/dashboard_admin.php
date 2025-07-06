@@ -177,7 +177,7 @@
       </div>
       <div class="nav-item">
         <i class="fas fa-shopping-cart"></i>
-        <span><a href="gestion_demandes.php">Demandes</a></span>
+        <span><a href="consulter_agents.php">Demandes</a></span>
       </div>
     </nav>
   </aside>

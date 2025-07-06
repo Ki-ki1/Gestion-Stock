@@ -1,76 +1,86 @@
 <?php
 require_once '../config/db.php';
 
-function getAllProduits() {
+// Récupérer tous les utilisateurs
+function getAllUtilisateurs() {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM Produits ORDER BY idP ASC");
+    $stmt = $pdo->query("SELECT * FROM Utilisateurs");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function getProduitById($idP) {
+// Ajouter un utilisateur
+function addUtilisateur($nom, $prenom, $login, $mdp) {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT * FROM Produits WHERE idP = ?");
-    $stmt->execute([$idP]);
+    $stmt = $pdo->prepare("INSERT INTO Utilisateurs (nom, prenom, login, mdp) VALUES (?, ?, ?, ?)");
+    return $stmt->execute([$nom, $prenom, $login, $mdp]);
+}
+
+// Supprimer un utilisateur
+function deleteUtilisateur($matricule) {
+    global $pdo;
+    $stmt = $pdo->prepare("DELETE FROM Utilisateurs WHERE matricule = ?");
+    return $stmt->execute([$matricule]);
+}
+
+// Mettre à jour un utilisateur
+function updateUtilisateur($matricule, $nom, $prenom, $login, $mdp) {
+    global $pdo;
+    $stmt = $pdo->prepare("UPDATE Utilisateurs SET nom = ?, prenom = ?, login = ?, mdp = ? WHERE matricule = ?");
+    return $stmt->execute([$nom, $prenom, $login, $mdp, $matricule]);
+}
+
+// Récupérer un utilisateur par son matricule
+function getUtilisateurByMatricule($matricule) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM Utilisateurs WHERE matricule = ?");
+    $stmt->execute([$matricule]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function saveProduit($idP, $designation, $seuil, $quantite) {
-    global $pdo;
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM Produits WHERE idP = ?");
-    $stmt->execute([$idP]);
-    $exists = $stmt->fetchColumn() > 0;
-    if ($exists) {
-        $stmt = $pdo->prepare("UPDATE Produits SET designation = ?, seuil = ?, quantite = ? WHERE idP = ?");
-        return $stmt->execute([$designation, $seuil, $quantite, $idP]);
-    } else {
-        $stmt = $pdo->prepare("INSERT INTO Produits (idP, designation, seuil, quantite) VALUES (?, ?, ?, ?)");
-        return $stmt->execute([$idP, $designation, $seuil, $quantite]);
-    }
-}
-
-function supprimerProduit($idP) {
-    global $pdo;
-    $stmt = $pdo->prepare("DELETE FROM Produits WHERE idP = ?");
-    return $stmt->execute([$idP]);
-}
-
-$designation = $idP = $seuil = $quantite = '';
+$utilisateurs = getAllUtilisateurs();
 $action = $_GET['action'] ?? '';
-$idP = $_GET['idP'] ?? null;
-$produits = getAllProduits();
+$matricule = $_GET['matricule'] ?? null;
+$nom = $prenom = $login = $mdp = '';
 
-if ($action === 'modifier' && $idP) {
-    $produit = getProduitById($idP);
-    if ($produit) {
-        $idP = $produit['idP'];
-        $designation = $produit['designation'];
-        $seuil = $produit['seuil'];
-        $quantite = $produit['quantite'];
+if ($action === 'modifier' && $matricule) {
+    $utilisateur = getUtilisateurByMatricule($matricule);
+    if ($utilisateur) {
+        $matricule = $utilisateur['matricule'];
+        $nom = $utilisateur['nom'];
+        $prenom = $utilisateur['prenom'];
+        $login = $utilisateur['login'];
+        $mdp = $utilisateur['mdp'];
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $idP = $_POST['idP'] ?? '';
-    $designation = $_POST['designation'] ?? '';
-    $seuil = $_POST['seuil'] ?? '';
-    $quantite = $_POST['quantite'] ?? '';
+    $matricule = $_POST['matricule'] ?? null;
+    $nom = $_POST['nom'] ?? '';
+    $prenom = $_POST['prenom'] ?? '';
+    $login = $_POST['login'] ?? '';
+    $mdp = $_POST['mdp'] ?? '';
     $action = $_POST['action'] ?? '';
-    if (empty($designation) || empty($idP) || empty($seuil) || empty($quantite)) {
+
+    if (empty($nom) || empty($prenom) || empty($login) || empty($mdp)) {
         echo "<script>alert('Tous les champs sont obligatoires.');</script>";
     } else {
-        saveProduit($idP, $designation, $seuil, $quantite);
-        header("Location: gestion_produits.php");
+        if ($action === 'ajouter') {
+            addUtilisateur($nom, $prenom, $login, $mdp);
+        } elseif ($action === 'modifier') {
+            updateUtilisateur($matricule, $nom, $prenom, $login, $mdp);
+        }
+        header("Location: gestion_utilisateurs.php");
         exit();
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
-    $idP = $_POST['idP'] ?? null;
-    if ($idP) {
-        supprimerProduit($idP);
-        echo "<script>alert('Produit supprimé avec succès.');</script>";
+    $matricule = $_POST['matricule'] ?? null;
+    if ($matricule) {
+        deleteUtilisateur($matricule);
+        echo "<script>alert('Utilisateur supprimé avec succès.');</script>";
     }
-    header("Location: gestion_produits.php");
+    header("Location: gestion_utilisateurs.php");
     exit();
 }
 ?>
@@ -79,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Gestion des Produits</title>
+    <title>Gestion des Utilisateurs</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -141,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             padding: 30px;
             border-radius: 12px;
             margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         table {
             width: 100%;
@@ -159,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        input[type="text"], input[type="number"], textarea {
+        input[type="text"], input[type="password"], textarea {
             width: 100%;
             padding: 10px;
             border-radius: 8px;
@@ -207,66 +218,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
         </div>
         <nav class="nav-links">
             <div class="nav-item">
-                <i class="fas fa-file-invoice"></i>
-                <a href="gestion_factures.php">Factures</a>
+                <i class="fas fa-users"></i>
+                <a href="gestion_utilisateurs.php">Utilisateurs</a>
             </div>
             <div class="nav-item">
                 <i class="fas fa-box"></i>
                 <a href="gestion_produits.php">Produits</a>
             </div>
+            <div class="nav-item">
+                <i class="fas fa-file-invoice"></i>
+                <a href="gestion_factures.php">Factures</a>
+            </div>
         </nav>
     </aside>
     <main class="main-content">
-        <h2>Gestion des Produits – Laboratoires Medis</h2>
+        <h2>Gestion des Utilisateurs – Laboratoires Medis</h2>
         <?php if ($action === 'ajouter' || $action === 'modifier'): ?>
             <div class="form-container">
-                <h3><?= $action === 'modifier' ? 'Modifier un Produit' : 'Ajouter un Produit' ?></h3>
+                <h3><?= $action === 'modifier' ? 'Modifier un Utilisateur' : 'Ajouter un Utilisateur' ?></h3>
                 <form method="post">
                     <input type="hidden" name="action" value="<?= $action ?>">
-                    <label>ID Produit</label>
-                    <input type="text" name="idP" value="<?= htmlspecialchars($idP) ?>" required>
-                    <label>Désignation</label>
-                    <textarea name="designation" required><?= htmlspecialchars($designation) ?></textarea>
-                    <label>Seuil</label>
-                    <input type="number" name="seuil" value="<?= htmlspecialchars($seuil) ?>" required>
-                    <label>Quantité</label>
-                    <input type="number" name="quantite" value="<?= htmlspecialchars($quantite) ?>" required>
+                    <input type="hidden" name="matricule" value="<?= htmlspecialchars($matricule) ?>">
+                    <label>Nom</label>
+                    <input type="text" name="nom" value="<?= htmlspecialchars($nom) ?>" required>
+                    <label>Prénom</label>
+                    <input type="text" name="prenom" value="<?= htmlspecialchars($prenom) ?>" required>
+                    <label>Login</label>
+                    <input type="text" name="login" value="<?= htmlspecialchars($login) ?>" required>
+                    <label>Mot de passe</label>
+                    <input type="password" name="mdp" value="<?= htmlspecialchars($mdp) ?>" required>
                     <input type="submit" value="<?= $action === 'modifier' ? 'Modifier' : 'Ajouter' ?>">
                 </form>
             </div>
         <?php else: ?>
             <div class="form-container">
-                <input type="text" id="search" class="search-input" placeholder="🔍 Rechercher un produit...">
+                <input type="text" id="search" class="search-input" placeholder="🔍 Rechercher un utilisateur...">
                 <div class="title-container">
-                    <h3>📦 Liste des Produits</h3>
+                    <h3>📋 Liste des Utilisateurs</h3>
                     <div class="action-buttons">
-                        <a href="gestion_produits.php?action=ajouter">➕ Ajouter un Produit</a>
+                        <a href="gestion_utilisateurs.php?action=ajouter">➕ Ajouter un Utilisateur</a>
                     </div>
                 </div>
-                <table id="produitTable">
+                <table id="utilisateurTable">
                     <thead>
                         <tr>
-                            <th data-column="0">ID</th>
-                            <th data-column="1">Désignation</th>
-                            <th data-column="2">Seuil</th>
-                            <th data-column="3">Quantité</th>
+                            <th data-column="0">Matricule</th>
+                            <th data-column="1">Nom</th>
+                            <th data-column="2">Prénom</th>
+                            <th data-column="3">Login</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($produits as $produit): ?>
+                        <?php foreach ($utilisateurs as $utilisateur): ?>
                         <tr>
-                            <td><?= htmlspecialchars($produit['idP']) ?></td>
-                            <td><?= htmlspecialchars($produit['designation']) ?></td>
-                            <td><?= htmlspecialchars($produit['seuil']) ?></td>
-                            <td><?= htmlspecialchars($produit['quantite']) ?></td>
+                            <td><?= htmlspecialchars($utilisateur['matricule']) ?></td>
+                            <td><?= htmlspecialchars($utilisateur['nom']) ?></td>
+                            <td><?= htmlspecialchars($utilisateur['prenom']) ?></td>
+                            <td><?= htmlspecialchars($utilisateur['login']) ?></td>
                             <td>
-                                <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer ce produit ?');">
+                                <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer cet utilisateur ?');">
                                     <input type="hidden" name="action" value="supprimer">
-                                    <input type="hidden" name="idP" value="<?= $produit['idP'] ?>">
+                                    <input type="hidden" name="matricule" value="<?= $utilisateur['matricule'] ?>">
                                     <button style="background-color:#e74c3c;">🗑</button>
                                 </form>
-                                <a href="gestion_produits.php?action=modifier&idP=<?= $produit['idP'] ?>">
+                                <a href="gestion_utilisateurs.php?action=modifier&matricule=<?= $utilisateur['matricule'] ?>">
                                     <button style="background-color:#1e3799;">✏️</button>
                                 </a>
                             </td>
@@ -287,7 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
         const searchInput = document.getElementById("search");
         searchInput.addEventListener("keyup", function () {
             const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll("#produitTable tbody tr");
+            const rows = document.querySelectorAll("#utilisateurTable tbody tr");
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(filter) ? "" : "none";
@@ -295,7 +311,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
         });
 
         // Tri dynamique
-        document.querySelectorAll("#produitTable th[data-column]").forEach(th => {
+        document.querySelectorAll("#utilisateurTable th[data-column]").forEach(th => {
             th.addEventListener("click", () => {
                 const table = th.closest("table");
                 const tbody = table.querySelector("tbody");
