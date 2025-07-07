@@ -12,7 +12,17 @@ function getAllUtilisateurs() {
 function addUtilisateur($nom, $prenom, $login, $mdp) {
     global $pdo;
     $stmt = $pdo->prepare("INSERT INTO Utilisateurs (nom, prenom, login, mdp) VALUES (?, ?, ?, ?)");
-    return $stmt->execute([$nom, $prenom, $login, $mdp]);
+    $stmt->execute([$nom, $prenom, $login, $mdp]);
+    $matricule = $pdo->lastInsertId();
+
+    // Ajouter l'utilisateur dans la table Agents ou Administrateurs en fonction du login
+    if (strpos($login, '_agent') !== false) {
+        $stmt = $pdo->prepare("INSERT INTO Agents (id_agent) VALUES (?)");
+        $stmt->execute([$matricule]);
+    } elseif (strpos($login, '_admin') !== false) {
+        $stmt = $pdo->prepare("INSERT INTO Administrateurs (id_admin) VALUES (?)");
+        $stmt->execute([$matricule]);
+    }
 }
 
 // Supprimer un utilisateur
