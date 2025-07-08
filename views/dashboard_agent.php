@@ -126,6 +126,10 @@
         <i class="fas fa-box"></i>
         <span><a href="produits.php">Produits</a></span>
       </div>
+      <div class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <span><a href="logout.php">Déconnexion</a></span>
+      </div>
     </nav>
   </aside>
   <!-- Main Content -->
@@ -139,7 +143,6 @@
       <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>
     </footer>
   </main>
-
   <script>
     // Rediriger automatiquement vers la page des demandes
     window.onload = function() {

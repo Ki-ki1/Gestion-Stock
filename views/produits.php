@@ -64,6 +64,9 @@ $produits = Produit::getAllProduits();
       color: white;
       text-decoration: none;
     }
+    .nav-item:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
     .nav-item i {
       margin-right: 10px;
     }
@@ -124,12 +127,16 @@ $produits = Produit::getAllProduits();
     </div>
     <nav class="nav-links">
       <div class="nav-item">
-        <i class="fas fa-file-invoice"></i>
-        <a href="gestion_factures.php">Factures</a>
+        <i class="fas fa-cart-shopping"></i>
+        <a href="demandes.php">Demandes</a>
       </div>
       <div class="nav-item active">
         <i class="fas fa-box"></i>
         <a href="produits.php">Produits</a>
+      </div>
+      <div class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <a href="logout.php">Déconnexion</a>
       </div>
     </nav>
   </aside>

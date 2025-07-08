@@ -19,9 +19,10 @@ function saveProduit($idP, $designation, $seuil, $quantite) {
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM Produits WHERE idP = ?");
     $stmt->execute([$idP]);
     $exists = $stmt->fetchColumn() > 0;
+
     if ($exists) {
-        $stmt = $pdo->prepare("UPDATE Produits SET designation = ?, seuil = ?, quantite = ? WHERE idP = ?");
-        return $stmt->execute([$designation, $seuil, $quantite, $idP]);
+        $stmt = $pdo->prepare("UPDATE Produits SET designation = ?, seuil = ? WHERE idP = ?");
+        return $stmt->execute([$designation, $seuil, $idP]);
     } else {
         $stmt = $pdo->prepare("INSERT INTO Produits (idP, designation, seuil, quantite) VALUES (?, ?, ?, ?)");
         return $stmt->execute([$idP, $designation, $seuil, $quantite]);
@@ -55,8 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $seuil = $_POST['seuil'] ?? '';
     $quantite = $_POST['quantite'] ?? '';
     $action = $_POST['action'] ?? '';
-    if (empty($designation) || empty($idP) || empty($seuil) || empty($quantite)) {
-        echo "<script>alert('Tous les champs sont obligatoires.');</script>";
+
+    if (empty($designation) || empty($idP) || empty($seuil)) {
+        echo "<script>alert('Les champs ID, Désignation et Seuil sont obligatoires.');</script>";
     } else {
         saveProduit($idP, $designation, $seuil, $quantite);
         header("Location: gestion_produits.php");
@@ -87,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             --primary-light: #1e3799;
             --light-gray: #e9ecef;
             --border: #dee2e6;
+            --danger: #e74c3c;
         }
         * {
             box-sizing: border-box;
@@ -197,6 +200,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             font-size: 14px;
             color: #666;
         }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .button-container input[type="submit"] {
+            background: var(--primary);
+            color: white;
+        }
+        .button-container button[type="button"] {
+            background: var(--danger);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -207,12 +228,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
         </div>
         <nav class="nav-links">
             <div class="nav-item">
+                <i class="fas fa-users"></i>
+                <a href="gestion_utilisateurs.php">Utilisateurs</a>
+            </div>
+            <div class="nav-item active">
+                <i class="fas fa-box"></i>
+                <a href="gestion_produits.php">Produits</a>
+            </div>
+            <div class="nav-item">
                 <i class="fas fa-file-invoice"></i>
                 <a href="gestion_factures.php">Factures</a>
             </div>
             <div class="nav-item">
-                <i class="fas fa-box"></i>
-                <a href="gestion_produits.php">Produits</a>
+                <i class="fas fa-sign-out-alt"></i>
+                <a href="logout.php">Déconnexion</a>
             </div>
         </nav>
     </aside>
@@ -230,8 +259,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                     <label>Seuil</label>
                     <input type="number" name="seuil" value="<?= htmlspecialchars($seuil) ?>" required>
                     <label>Quantité</label>
-                    <input type="number" name="quantite" value="<?= htmlspecialchars($quantite) ?>" required>
-                    <input type="submit" value="<?= $action === 'modifier' ? 'Modifier' : 'Ajouter' ?>">
+                    <input type="number" name="quantite" value="<?= htmlspecialchars($quantite) ?>" <?= $action === 'modifier' ? 'readonly' : '' ?>>
+                    <div class="button-container">
+                        <input type="submit" value="<?= $action === 'modifier' ? 'Modifier' : 'Ajouter' ?>">
+                        <button type="button" onclick="window.location.href='gestion_produits.php'">Annuler</button>
+                    </div>
                 </form>
             </div>
         <?php else: ?>

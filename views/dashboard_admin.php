@@ -179,6 +179,10 @@
         <i class="fas fa-shopping-cart"></i>
         <span><a href="consulter_agents.php">Demandes</a></span>
       </div>
+      <div class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <span><a href="logout.php">Déconnexion</a></span>
+      </div>
     </nav>
   </aside>
   <!-- Main Content -->

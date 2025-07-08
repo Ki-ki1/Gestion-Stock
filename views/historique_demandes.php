@@ -1,21 +1,13 @@
 <?php
 require_once '../config/db.php';
-
-function generateDateFromId($id) {
-    // Utiliser l'identifiant pour générer une date pseudo-aléatoire mais déterministe
-    srand($id);
-    $randomDays = rand(0, 365);
-    $date = date('Y-m-d', strtotime("-$randomDays days"));
-    return $date;
-}
-
 try {
     $sql = "SELECT
                 d.numD,
                 d.etat,
                 p.designation AS nom_produit,
                 d.quantite,
-                d.description
+                d.description,
+                d.date_demande
             FROM demandes d
             JOIN produits p ON d.idProduit = p.idP
             ORDER BY d.numD DESC";
@@ -38,6 +30,7 @@ try {
             --danger: #e74c3c;
             --success: #28a745;
             --warning: #ffc107;
+            --info: #17a2b8;
         }
         * {
             box-sizing: border-box;
@@ -105,7 +98,6 @@ try {
             margin-bottom: 15px;
             color: var(--primary);
         }
-        /* Style champ recherche */
         #searchInput {
             width: 100%;
             padding: 10px 12px;
@@ -180,6 +172,9 @@ try {
         .status-rejected {
             color: var(--danger);
         }
+        .status-in-progress {
+            color: var(--info);
+        }
     </style>
 </head>
 <body>
@@ -197,6 +192,10 @@ try {
             <a href="historique_demandes.php" class="nav-item active">
                 <i class="fas fa-clock-rotate-left"></i>
                 <span>Historique demandes</span>
+            </a>
+            <a href="logout.php" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Déconnexion</span>
             </a>
         </nav>
     </aside>
@@ -229,13 +228,15 @@ try {
                                         echo '<i class="fas fa-check-circle status-symbol status-approved"></i>';
                                     } elseif ($demande['etat'] === 'Rejetée') {
                                         echo '<i class="fas fa-times-circle status-symbol status-rejected"></i>';
+                                    } elseif ($demande['etat'] === 'En cours') {
+                                        echo '<i class="fas fa-spinner status-symbol status-in-progress"></i>';
                                     }
                                     ?>
                                 </td>
                                 <td><?= htmlspecialchars($demande['nom_produit']) ?></td>
                                 <td><?= htmlspecialchars($demande['quantite']) ?></td>
                                 <td><?= htmlspecialchars($demande['description']) ?></td>
-                                <td><?= generateDateFromId($demande['numD']) ?></td>
+                                <td><?= htmlspecialchars($demande['date_demande']) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>

@@ -1,6 +1,6 @@
 <?php
 require_once '../config/db.php';
-session_start(); // si l'utilisateur est connecté
+session_start(); // Vérifie si l'utilisateur est connecté
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = $_POST['description'];
@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantites = $_POST['quantites'];
 
     // Exemple de récupération de l'utilisateur connecté
-    $utilisateur_id = $_SESSION['matricule'] ?? 1; // à adapter selon ton système de connexion
+    $utilisateur_id = $_SESSION['matricule'] ?? 1; // À adapter selon votre système de connexion
 
     if (count($produits) !== count($quantites)) {
         die("Erreur : les produits et les quantités ne correspondent pas.");
@@ -18,7 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
 
         for ($i = 0; $i < count($produits); $i++) {
-            $stmt = $pdo->prepare("INSERT INTO demandes (quantite, etat, description, utilisateur_id, idProduit) VALUES (?, 'En attente', ?, ?, ?)");
+            $stmt = $pdo->prepare("
+                INSERT INTO demandes (quantite, etat, description, utilisateur_id, idProduit, date_demande)
+                VALUES (?, 'En attente', ?, ?, ?, NOW())
+            ");
             $stmt->execute([
                 $quantites[$i],
                 $description,

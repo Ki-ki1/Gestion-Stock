@@ -12,6 +12,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             --primary: #0c2461;
             --light-gray: #e9ecef;
             --danger: #e74c3c;
+            --success: #28a745;
         }
         * {
             box-sizing: border-box;
@@ -87,6 +88,28 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             border-top: 1px solid #ccc;
             background: #fff;
         }
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .button-container input[type="submit"],
+        .button-container button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .button-container input[type="submit"] {
+            background: var(--primary);
+            color: white;
+        }
+        .button-container button {
+            background: var(--danger);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -103,6 +126,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a href="historique_demandes.php" class="nav-item">
                 <i class="fas fa-clock-rotate-left"></i>
                 <span>Historique demandes</span>
+            </a>
+            <a href="logout.php" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Déconnexion</span>
             </a>
         </nav>
     </aside>
@@ -135,10 +162,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     </div>
                 </div>
                 <button type="button" onclick="ajouterProduit()" style="margin-bottom: 20px; background: var(--success); color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">+ Ajouter un produit</button>
-                <input type="submit" value="Envoyer la demande" style="padding: 12px 25px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;" />
+                <div class="button-container">
+                    <input type="submit" value="Envoyer la demande" />
+                    <button type="button" onclick="window.location.href='historique_demandes.php';">Annuler</button>
+                </div>
             </form>
         </div>
-         <footer>
+        <footer>
             <p>&copy; 2025 Laboratoires Medis. Tous droits réservés.</p>
             <p>📍 Rue de l'Innovation, Nabeul, Tunisie</p>
             <p>📞 +216 72 000 000 | 📧 contact@medis.com.tn</p>

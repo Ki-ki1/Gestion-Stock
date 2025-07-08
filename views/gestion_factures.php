@@ -52,7 +52,6 @@ $numToEdit = $action === 'modifier' ? ($_GET['num'] ?? $_POST['num'] ?? null) : 
 $factureToEdit = $numToEdit ? getFactureByNum($numToEdit) : [];
 $fournisseur_edit = $date_edit = '';
 $idP_edit = $quantite_edit = $pu_edit = [];
-
 if ($factureToEdit) {
     $fournisseur_edit = $factureToEdit[0]['fournisseur'];
     $date_edit = $factureToEdit[0]['date'];
@@ -244,12 +243,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <nav class="nav-links">
             <div class="nav-item">
+                <i class="fas fa-users"></i>
+                <a href="gestion_utilisateurs.php">Utilisateurs</a>
+            </div>
+            <div class="nav-item active">
                 <i class="fas fa-file-invoice"></i>
                 <a href="gestion_factures.php">Factures</a>
             </div>
             <div class="nav-item">
                 <i class="fas fa-box"></i>
                 <a href="gestion_produits.php">Produits</a>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <a href="logout.php">Déconnexion</a>
             </div>
         </nav>
     </aside>
@@ -274,6 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="button" onclick="ajouterLigneProduit()">➕ Ajouter un produit</button>
                     <br><br>
                     <input type="submit" value="<?= $action === 'modifier' ? 'Modifier la facture' : 'Ajouter la facture' ?>">
+                    <a href="gestion_factures.php" style="background-color:#e74c3c;">Annuler</a>
                 </form>
             </div>
         <?php else: ?>
@@ -325,7 +333,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </footer>
     </main>
     <script>
-        const produitsOptions = <?= json_encode($produits) ?>;
+        const produitsOptions = <?= json_encode(array_map(function($p) {
+            return ['idP' => $p['idP'], 'designation' => $p['designation']];
+        }, $produits)) ?>;
 
         function ajouterLigneProduit(id = '', quantite = '', pu = '') {
             const container = document.getElementById("produits-container");
@@ -362,14 +372,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Recherche dynamique
         const searchInput = document.getElementById("search");
-        searchInput.addEventListener("keyup", function () {
-            const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll("#factureTable tbody tr");
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(filter) ? "" : "none";
+        if (searchInput) {
+            searchInput.addEventListener("keyup", function () {
+                const filter = this.value.toLowerCase();
+                const rows = document.querySelectorAll("#factureTable tbody tr");
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(filter) ? "" : "none";
+                });
             });
-        });
+        }
 
         // Tri dynamique
         document.querySelectorAll("#factureTable th[data-column]").forEach(th => {
@@ -378,7 +390,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const tbody = table.querySelector("tbody");
                 const index = parseInt(th.getAttribute("data-column"));
                 const rows = Array.from(tbody.querySelectorAll("tr"));
-                const asc = th.classList.toggle("asc");
+                const asc = !th.classList.contains("asc");
+                th.classList.toggle("asc", asc);
                 rows.sort((a, b) => {
                     const cellA = a.children[index].textContent.trim();
                     const cellB = b.children[index].textContent.trim();

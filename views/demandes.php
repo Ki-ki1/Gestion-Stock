@@ -104,7 +104,6 @@
       font-weight: 700;
       color: var(--primary);
     }
-    /* Champ de recherche */
     #searchInput {
       width: 100%;
       padding: 10px 12px;
@@ -186,7 +185,6 @@
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="logo">
       <img src="../icon/images.jpg" alt="Medis Logo">
@@ -201,14 +199,16 @@
         <i class="fas fa-boxes-stacked"></i>
         <span><a href="produits.php">Produits</a></span>
       </div>
+      <div class="nav-item">
+        <i class="fas fa-sign-out-alt"></i>
+        <span><a href="logout.php">Déconnexion</a></span>
+      </div>
     </nav>
   </aside>
-  <!-- Main Content -->
   <main class="main-content">
     <div class="dashboard-title">
       <h2>Liste des Demandes</h2>
     </div>
-    <!-- Champ de recherche -->
     <input type="text" id="searchInput" placeholder="Rechercher dans les demandes...">
     <table id="demandesTable">
       <thead>
@@ -227,15 +227,6 @@
         <?php
         require_once '../models/Demande.php';
         $demandes = Demande::getAllDemandes();
-
-        function generateDateFromId($id) {
-            // Utiliser l'identifiant pour générer une date pseudo-aléatoire mais déterministe
-            srand($id);
-            $randomDays = rand(0, 365);
-            $date = date('Y-m-d', strtotime("-$randomDays days"));
-            return $date;
-        }
-
         if (!empty($demandes)) {
           foreach ($demandes as $demande) {
             if ($demande['etat'] !== 'Approuvée') {
@@ -249,18 +240,21 @@
               echo '<i class="fas fa-clock status-symbol status-pending"></i>';
             } elseif ($demande['etat'] === 'Rejetée') {
               echo '<i class="fas fa-times-circle status-symbol status-rejected"></i>';
+            } elseif ($demande['etat'] === 'En cours') {
+              echo '<i class="fas fa-spinner status-symbol status-pending"></i>';
             }
             ?>
           </td>
           <td><?= htmlspecialchars($demande['description']) ?></td>
           <td><?= htmlspecialchars($demande['user_nom']) ?></td>
           <td><?= htmlspecialchars($demande['user_prenom']) ?></td>
-          <td><?= generateDateFromId($demande['numD']) ?></td>
+          <td><?= htmlspecialchars($demande['date_demande']) ?></td>
           <td>
             <select name="etat" onchange="updateEtat(<?= $demande['numD'] ?>, this.value)">
               <option value="En attente" <?= $demande['etat'] === 'En attente' ? 'selected' : '' ?>>En attente</option>
               <option value="Approuvée" <?= $demande['etat'] === 'Approuvée' ? 'selected' : '' ?>>Approuvée</option>
               <option value="Rejetée" <?= $demande['etat'] === 'Rejetée' ? 'selected' : '' ?>>Rejetée</option>
+              <option value="En cours" <?= $demande['etat'] === 'En cours' ? 'selected' : '' ?>>En cours</option>
             </select>
           </td>
         </tr>
@@ -270,7 +264,7 @@
         } else {
         ?>
         <tr>
-          <td colspan="7">Aucune demande trouvée.</td>
+          <td colspan="8">Aucune demande trouvée.</td>
         </tr>
         <?php
         }
@@ -284,7 +278,6 @@
     </footer>
   </main>
   <script>
-    // Fonction pour mettre à jour l'état via AJAX
     function updateEtat(numD, etat) {
       var xhr = new XMLHttpRequest();
       xhr.open("POST", "../controllers/update_demande.php", true);
@@ -292,12 +285,11 @@
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
           alert(xhr.responseText);
-          location.reload(); // Recharger la page pour voir les changements
+          location.reload();
         }
       };
       xhr.send("numD=" + encodeURIComponent(numD) + "&etat=" + encodeURIComponent(etat));
     }
-    // Tri des colonnes (sauf la dernière colonne "Action")
     const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
     const comparer = (idx, asc) => (a, b) => {
       const v1 = getCellValue(a, idx);
@@ -311,13 +303,11 @@
       }
     };
     document.querySelectorAll('#demandesTable th').forEach((th, index) => {
-      // Ne pas activer le tri sur la dernière colonne "Action"
-      if (index === 6) return;
+      if (index === 7) return;
       th.style.cursor = 'pointer';
       th.addEventListener('click', () => {
         const table = th.closest('table');
         const tbody = table.querySelector('tbody');
-        // Enlever les classes de tri sur les autres colonnes
         Array.from(table.querySelectorAll('th')).forEach(th2 => {
           if (th2 !== th) th2.classList.remove('sort-asc', 'sort-desc');
         });
@@ -329,15 +319,13 @@
         rows.forEach(row => tbody.appendChild(row));
       });
     });
-    // Recherche dans le tableau
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', function() {
       const filter = this.value.toLowerCase();
       const rows = document.querySelectorAll('#demandesTable tbody tr');
       rows.forEach(row => {
-        // On teste si la ligne contient le texte dans n'importe quelle cellule (hors colonne action)
         const cellsText = Array.from(row.children)
-          .slice(0, 6) // Ignorer la dernière colonne
+          .slice(0, 6)
           .map(td => td.textContent.toLowerCase())
           .join(' ');
         row.style.display = cellsText.includes(filter) ? '' : 'none';

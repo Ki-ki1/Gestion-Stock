@@ -14,7 +14,6 @@ function addUtilisateur($nom, $prenom, $login, $mdp) {
     $stmt = $pdo->prepare("INSERT INTO Utilisateurs (nom, prenom, login, mdp) VALUES (?, ?, ?, ?)");
     $stmt->execute([$nom, $prenom, $login, $mdp]);
     $matricule = $pdo->lastInsertId();
-
     // Ajouter l'utilisateur dans la table Agents ou Administrateurs en fonction du login
     if (strpos($login, '_agent') !== false) {
         $stmt = $pdo->prepare("INSERT INTO Agents (id_agent) VALUES (?)");
@@ -50,7 +49,7 @@ function getUtilisateurByMatricule($matricule) {
 $utilisateurs = getAllUtilisateurs();
 $action = $_GET['action'] ?? '';
 $matricule = $_GET['matricule'] ?? null;
-$nom = $prenom = $login = $mdp = '';
+$nom = $prenom = $login = $mdp = $confirm_mdp = '';
 
 if ($action === 'modifier' && $matricule) {
     $utilisateur = getUtilisateurByMatricule($matricule);
@@ -69,18 +68,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prenom = $_POST['prenom'] ?? '';
     $login = $_POST['login'] ?? '';
     $mdp = $_POST['mdp'] ?? '';
+    $confirm_mdp = $_POST['confirm_mdp'] ?? '';
     $action = $_POST['action'] ?? '';
 
     if (empty($nom) || empty($prenom) || empty($login) || empty($mdp)) {
         echo "<script>alert('Tous les champs sont obligatoires.');</script>";
     } else {
-        if ($action === 'ajouter') {
-            addUtilisateur($nom, $prenom, $login, $mdp);
-        } elseif ($action === 'modifier') {
-            updateUtilisateur($matricule, $nom, $prenom, $login, $mdp);
+        if ($action === 'modifier' && $mdp !== $confirm_mdp) {
+            echo "<script>alert('Les mots de passe ne correspondent pas.');</script>";
+        } else {
+            if ($action === 'ajouter') {
+                addUtilisateur($nom, $prenom, $login, $mdp);
+            } elseif ($action === 'modifier') {
+                updateUtilisateur($matricule, $nom, $prenom, $login, $mdp);
+            }
+            header("Location: gestion_utilisateurs.php");
+            exit();
         }
-        header("Location: gestion_utilisateurs.php");
-        exit();
     }
 }
 
@@ -218,6 +222,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
             font-size: 14px;
             color: #666;
         }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .button-container input[type="submit"] {
+            background: var(--primary);
+            color: white;
+        }
+        .button-container button[type="button"] {
+            background: #6c757d;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -239,6 +261,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                 <i class="fas fa-file-invoice"></i>
                 <a href="gestion_factures.php">Factures</a>
             </div>
+            <div class="nav-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <a href="logout.php">Déconnexion</a>
+            </div>
         </nav>
     </aside>
     <main class="main-content">
@@ -257,7 +283,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'supprimer') {
                     <input type="text" name="login" value="<?= htmlspecialchars($login) ?>" required>
                     <label>Mot de passe</label>
                     <input type="password" name="mdp" value="<?= htmlspecialchars($mdp) ?>" required>
-                    <input type="submit" value="<?= $action === 'modifier' ? 'Modifier' : 'Ajouter' ?>">
+                    <?php if ($action === 'modifier'): ?>
+                        <label>Confirmer le mot de passe</label>
+                        <input type="password" name="confirm_mdp" required>
+                    <?php endif; ?>
+                    <div class="button-container">
+                        <input type="submit" value="<?= $action === 'modifier' ? 'Modifier' : 'Ajouter' ?>">
+                        <button type="button" onclick="window.location.href='gestion_utilisateurs.php'">Annuler</button>
+                    </div>
                 </form>
             </div>
         <?php else: ?>
